@@ -1,0 +1,48 @@
+[ACT: Right to Information Act, 2005]
+
+[SECTION: Section 3]
+Act: Right to Information Act, 2005
+Section: Section 3
+Title: Right to Information
+Text:
+Subject to the provisions of this Act, all citizens shall have the right to information held by or under the control of public authorities.
+
+[SECTION: Section 6]
+Act: Right to Information Act, 2005
+Section: Section 6
+Title: Request for Obtaining Information
+Text:
+(1) A person who desires to obtain any information under this Act shall make a request in writing or through electronic means in English or Hindi or in the official language of the area in which the application is being made, accompanying such fee as may be prescribed, to the Central Public Information Officer or State Public Information Officer (CPIO/SPIO).
+(2) An applicant making request for information shall not be required to give any reason for requesting the information or any other personal details except those that may be necessary for contacting him.
+(3) Where an application is made to a public authority requesting information which is held by another public authority, the application shall be transferred within five (5) days to that public authority.
+
+[SECTION: Section 7]
+Act: Right to Information Act, 2005
+Section: Section 7
+Title: Disposal of Request (Timelines)
+Text:
+(1) The Central Public Information Officer or State Public Information Officer on receipt of a request under section 6 shall, as expeditiously as possible, and in any case within thirty (30) days of the receipt of the request, either provide the information on payment of such fee as may be prescribed or reject the request for any of the reasons specified in section 8 and 9:
+Provided that where the information sought for concerns the life or liberty of a person, the same shall be provided within forty-eight (48) hours of the receipt of the request.
+(2) If the Public Information Officer fails to give a decision on the request within the periods specified, the Public Information Officer shall be deemed to have refused the request.
+
+[SECTION: Section 8]
+Act: Right to Information Act, 2005
+Section: Section 8
+Title: Exemption from Disclosure of Information
+Text:
+(1) Notwithstanding anything contained in this Act, there shall be no obligation to give any citizen information disclosure of which would prejudicially affect the sovereignty and integrity of India, security, strategic, scientific or economic interests of the State; information expressly forbidden by any court; commercial confidence, trade secrets or intellectual property; personal information having no relationship to any public activity or interest.
+
+[SECTION: Section 19]
+Act: Right to Information Act, 2005
+Section: Section 19
+Title: Appeals (First Appeal and Second Appeal)
+Text:
+(1) First Appeal: Any person who does not receive a decision within the time specified in Section 7(1), or is aggrieved by a decision of the Central Public Information Officer or State Public Information Officer, may within thirty (30) days from the expiry of such period prefer an appeal to such officer who is senior in rank to the CPIO/SPIO (First Appellate Authority).
+(3) Second Appeal: A second appeal against the decision under sub-section (1) shall lie within ninety (90) days from the date on which the decision should have been made or was actually received, with the Central Information Commission (CIC) or the State Information Commission (SIC).
+
+[SECTION: Section 20]
+Act: Right to Information Act, 2005
+Section: Section 20
+Title: Penalties for Non-Compliance
+Text:
+Where the Central Information Commission or State Information Commission at the time of deciding any appeal is of opinion that the Public Information Officer has without any reasonable cause, refused to receive an application or has not furnished information within the time specified under sub-section (1) of section 7 or knowingly given incorrect, incomplete or misleading information, it shall impose a penalty of two hundred and fifty rupees (Rs 250) each day till application is received or information is furnished, so however, the total amount of such penalty shall not exceed twenty-five thousand rupees (Rs 25,000).

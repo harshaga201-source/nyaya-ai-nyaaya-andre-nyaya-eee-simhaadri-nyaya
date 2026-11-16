@@ -1,0 +1,110 @@
+[ACT: Motor Vehicles Act, 1988 (as amended by Motor Vehicles Amendment Act, 2019)]
+
+[SECTION: Section 112]
+Act: Motor Vehicles Act, 1988
+Section: Section 112
+Title: Limits of Speed
+Text:
+(1) No person shall drive a motor vehicle or cause or allow a motor vehicle to be driven in any public place at a speed exceeding the maximum speed or below the minimum speed fixed for the vehicle under this Act or by any other law for the time being in force.
+(2) The State Government or any authority authorized in this behalf may fix speed limits for motor vehicles generally or for any specified class or description of motor vehicles within specified areas.
+Key Notes: Driving beyond the notified speed limit constitutes an offence under Section 183.
+
+[SECTION: Section 183]
+Act: Motor Vehicles Act, 1988 (Amended 2019)
+Section: Section 183
+Title: Driving at Excessive Speed
+Text:
+(1) Whoever drives or causes any person who is employed by him or subject to his control in driving to drive a motor vehicle in contravention of the speed limits referred to in Section 112 shall be punishable:
+(i) Where such motor vehicle is a light motor vehicle, with fine which shall not be less than one thousand rupees but may extend to two thousand rupees (Rs 1,000 to Rs 2,000).
+(ii) Where such motor vehicle is a medium or heavy goods vehicle or medium or heavy passenger vehicle, with fine which shall not be less than two thousand rupees but may extend to four thousand rupees (Rs 2,000 to Rs 4,000).
+(2) For a second or subsequent offence under sub-section (1), if such person is convicted, the court may cause the driving licence to be impounded for a period as specified.
+Options: Virtual court payment, physical traffic court contest if speed gun calibration is challenged.
+
+[SECTION: Section 129]
+Act: Motor Vehicles Act, 1988 (Amended 2019)
+Section: Section 129
+Title: Wearing of Protective Headgear
+Text:
+Every person, above four years of age, driving or riding on a motorcycle of any class or description, shall, while in a public place, wear protective headgear conforming to such standards as may be prescribed by the Central Government.
+Provided that this section shall not apply to a person who is a Sikh, if he is, while driving or riding on the motorcycle, in a public place, wearing a turban.
+Provided further that the Central Government may make rules for the safety of children below four years of age riding or being carried on a motorcycle.
+
+[SECTION: Section 194D]
+Act: Motor Vehicles Act, 1988 (Amended 2019)
+Section: Section 194D
+Title: Penalty for not wearing Protective Headgear (Helmet)
+Text:
+Whoever drives or rides a motorcycle in contravention of the provisions of Section 129 or the rules or regulations made thereunder shall be punishable with a fine of one thousand rupees (Rs 1,000) and he shall be disqualified for holding a licence for a period of three months.
+
+[SECTION: Section 194B]
+Act: Motor Vehicles Act, 1988 (Amended 2019)
+Section: Section 194B
+Title: Use of Safety Belts and Seatbelts and Seating of Children
+Text:
+(1) Whoever drives a motor vehicle without wearing a safety belt (seatbelt) or carries passengers not wearing seat belts / safety belts shall be punishable with a fine of one thousand rupees (Rs 1,000).
+(2) Whoever drives a motor vehicle or causes or allows a motor vehicle to be driven with a child who, not having attained the age of fourteen years, is not secured by a safety belt or seatbelt or child restraint system conforming to specifications shall be punishable with a fine of one thousand rupees (Rs 1,000).
+
+[SECTION: Section 184]
+Act: Motor Vehicles Act, 1988 (Amended 2019)
+Section: Section 184
+Title: Driving Dangerously (Red Light Jumping, Mobile Phone Usage)
+Text:
+Whoever drives a motor vehicle at a speed or in a manner which is dangerous to the other persons having regard to all the circumstances of the case, including:
+(a) jumping a red light;
+(b) violating a stop sign;
+(c) use of handheld communications devices while driving;
+(d) passing or overtaking other vehicles in a manner contrary to law;
+(e) driving against authorized flow of traffic;
+shall be punishable, for the first offence, with imprisonment for a term which may extend to one year or with fine which shall not be less than one thousand rupees but may extend to five thousand rupees (Rs 1,000 to Rs 5,000), and for any second or subsequent offence with imprisonment up to two years or fine up to ten thousand rupees (Rs 10,000).
+
+[SECTION: Section 185]
+Act: Motor Vehicles Act, 1988 (Amended 2019)
+Section: Section 185
+Title: Driving by a Drunken Person or by a Person under the Influence of Drugs
+Text:
+Whoever, while driving, or attempting to drive, a motor vehicle:
+(a) has, in his blood, alcohol exceeding 30 mg per 100 ml of blood detected in a test by a breath analyzer, or
+(b) is under the influence of a drug to such an extent as to be incapable of exercising proper control over the vehicle,
+shall be punishable for the first offence with imprisonment for a term which may extend to six months, or with fine of ten thousand rupees (Rs 10,000), or with both; and for a second or subsequent offence with imprisonment for a term which may extend to two years, or with fine of fifteen thousand rupees (Rs 15,000), or with both.
+Key Note: Breath analyzer test or medical examination is mandatory. This is a non-compoundable offence on the spot; must be referred to a regular magistrate court.
+
+[SECTION: Section 3 and Section 181]
+Act: Motor Vehicles Act, 1988 (Amended 2019)
+Section: Section 181
+Title: Driving Vehicles in Contravention of Section 3 or Section 4 (Without Valid Driving Licence)
+Text:
+Whoever drives a motor vehicle in contravention of Section 3 (necessity for driving licence) or Section 4 (age limit in connection with driving of motor vehicles) shall be punishable with imprisonment for a term which may extend to three months, or with fine of five thousand rupees (Rs 5,000), or with both.
+
+[SECTION: Section 146 and Section 196]
+Act: Motor Vehicles Act, 1988 (Amended 2019)
+Section: Section 196
+Title: Driving Uninsured Vehicle (Without Mandatory Third-Party Insurance)
+Text:
+Whoever drives a motor vehicle or causes or allows a motor vehicle to be driven in contravention of the provisions of Section 146 (necessity for insurance against third party risk) shall be punishable for the first offence with imprisonment which may extend to three months, or with fine of two thousand rupees (Rs 2,000), or with both, and for a subsequent offence with imprisonment which may extend to three months, or with fine of four thousand rupees (Rs 4,000), or with both.
+
+[SECTION: Section 190(2)]
+Act: Motor Vehicles Act, 1988 (Amended 2019)
+Section: Section 190(2)
+Title: Violation of Road Safety and Pollution Standards (PUC Certificate)
+Text:
+Any person who drives or causes or allows to be driven, in any public place a motor vehicle, which violates the standards prescribed in relation to road safety, control of noise and air-pollution (such as invalid or absent Pollution Under Control / PUC certificate), shall be punishable for the first offence with imprisonment for a term which may extend to three months, or with fine which may extend to ten thousand rupees (Rs 10,000) or with both and disqualification from holding driving licence for three months.
+
+[SECTION: Section 130 and Section 139]
+Act: Motor Vehicles Act, 1988
+Section: Section 130
+Title: Duty to Produce Licence and Certificate of Registration
+Text:
+The driver of a motor vehicle in any public place shall, on demand by any police officer in uniform, produce his licence for examination.
+Rule 139 of the Central Motor Vehicles Rules (CMVR) provides that the driver or owner may produce the documents (driving licence, registration certificate, insurance, fitness, PUC) within fifteen (15) days of demand. Furthermore, electronic documents stored in the DigiLocker or mParivahan mobile applications are legally recognized as equivalent to original physical documents as per Ministry of Road Transport and Highways (MoRTH) notifications.
+
+[SECTION: Section 208]
+Act: Motor Vehicles Act, 1988
+Section: Section 208
+Title: Summary Disposal of Cases, Virtual Courts, and Lok Adalat
+Text:
+The court taking cognizance of any offence under this Act may state upon the summons that the accused person may plead guilty to the charge without appearing before the court, by paying the fine specified into the court or through an online portal (Virtual Court system).
+Where an accused disputes the challan (e.g. wrong vehicle number plate captured, camera error, valid documents present but not verified), the accused has the legal right to contest the challan:
+1. Virtual Court Portal: Contest the notice online at vcourts.gov.in or the State Police Traffic portal.
+2. Regular Traffic Court: Summons will be transferred to the jurisdictional Magistrate where evidence can be presented.
+3. Lok Adalat: Free forum held quarterly across all districts under Legal Services Authorities Act for amicable settlement and fine reduction.
+Official Portal: parivahan.gov.in / echallan.parivahan.gov.in.

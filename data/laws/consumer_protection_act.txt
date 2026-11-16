@@ -1,0 +1,90 @@
+[ACT: Consumer Protection Act, 2019]
+
+[SECTION: Section 2(7)]
+Act: Consumer Protection Act, 2019
+Section: Section 2(7)
+Title: Definition of Consumer
+Text:
+"Consumer" means any person who:
+(i) buys any goods for a consideration which has been paid or promised or partly paid and partly promised, or under any system of deferred payment and includes any user of such goods other than the person who buys them when such use is made with the approval of such person, but does not include a person who obtains such goods for resale or for any commercial purpose; or
+(ii) hires or avails of any service for a consideration which has been paid or promised or partly paid and partly promised, or under any system of deferred payment and includes any beneficiary of such service;
+Explanation: "commercial purpose" does not include use by a person of goods bought and used by him exclusively for the purposes of earning his livelihood by means of self-employment. Also includes transactions through electronic means or e-commerce.
+
+[SECTION: Section 2(10)]
+Act: Consumer Protection Act, 2019
+Section: Section 2(10)
+Title: Defective Goods ("Defect")
+Text:
+"Defect" means any fault, imperfection or shortcoming in the quality, quantity, potency, purity or standard which is required to be maintained by or under any law for the time being in force or under any contract, express or implied or as is claimed by the trader in any manner whatsoever in relation to any goods.
+
+[SECTION: Section 2(11)]
+Act: Consumer Protection Act, 2019
+Section: Section 2(11)
+Title: Deficiency in Service
+Text:
+"Deficiency" means any fault, imperfection, shortcoming or inadequacy in the quality, nature and manner of performance which is required to be maintained by or under any law for the time being in force or has been undertaken to be performed by a person in pursuance of a contract or otherwise in relation to any service, and includes:
+(a) any act of negligence or omission or commission by such person which causes loss or injury to the consumer; and
+(b) deliberate withholding of relevant information by such person to the consumer.
+
+[SECTION: Section 2(47)]
+Act: Consumer Protection Act, 2019
+Section: Section 2(47)
+Title: Unfair Trade Practice
+Text:
+"Unfair trade practice" means a trade practice which, for the purpose of promoting the sale, use or supply of any goods or for the provision of any service, adopts any unfair method or unfair or deceptive practice including:
+- Falsely representing that the goods or services are of a particular standard, quality, grade or model;
+- Misleading warranties, promises or representations;
+- Refusing to take back or withdraw defective goods or to withdraw or discontinue deficient services and refusing to refund the consideration contemplated;
+- Disclosing consumer personal information given in confidence.
+
+[SECTION: Section 34]
+Act: Consumer Protection Act, 2019
+Section: Section 34
+Title: Jurisdiction of District Consumer Commission
+Text:
+(1) Subject to the other provisions of this Act, the District Commission shall have jurisdiction to entertain complaints where the value of the goods or services paid as consideration does not exceed fifty lakh rupees (Rs 50,00,000).
+(2) A complaint shall be instituted in a District Commission within the local limits of whose jurisdiction:
+(a) the opposite party resides or carries on business; or
+(b) the complainant resides or personally works for gain.
+Note: State Commission has jurisdiction between Rs 50 Lakhs to Rs 2 Crores (Section 47); National Commission has jurisdiction exceeding Rs 2 Crores (Section 58).
+
+[SECTION: Section 35]
+Act: Consumer Protection Act, 2019
+Section: Section 35
+Title: Manner in which Complaint shall be Made
+Text:
+(1) A complaint, in relation to any goods sold or delivered or agreed to be sold or delivered or any service provided or agreed to be provided, may be filed with a District Commission by:
+(a) the consumer to whom such goods are sold or delivered, or service provided;
+(b) any recognized consumer association;
+(c) one or more consumers, where there are numerous consumers having the same interest; or
+(d) the Central Government or State Government.
+(2) Every complaint filed shall be accompanied by such fee and in such manner as may be prescribed.
+Note: Complaints can be filed online from anywhere in India through the e-Daakhil portal (edaakhil.nic.in).
+
+[SECTION: Section 38]
+Act: Consumer Protection Act, 2019
+Section: Section 38
+Title: Procedure on Admission of Complaint
+Text:
+The District Commission shall refer a copy of the admitted complaint within twenty-one (21) days from the date of admission to the opposite party, directing him to give his version of the case within a period of thirty (30) days or such extended period not exceeding fifteen (15) days as may be granted by the District Commission. If the defect cannot be determined without proper analysis or test, samples may be sent to an appropriate laboratory.
+
+[SECTION: Section 39]
+Act: Consumer Protection Act, 2019
+Section: Section 39
+Title: Findings and Reliefs granted by District Commission
+Text:
+If the District Commission is satisfied that the goods or services suffer from any defect or deficiency, it shall issue an order directing the opposite party to:
+(a) remove the defect pointed out;
+(b) replace the goods with new goods of similar description free from defect;
+(c) return to the complainant the price or charges paid along with interest;
+(d) pay such amount as may be awarded by it as compensation to the consumer for any loss or injury suffered due to negligence;
+(e) pay punitive damages;
+(f) discontinue the unfair trade practice.
+
+[SECTION: Section 69]
+Act: Consumer Protection Act, 2019
+Section: Section 69
+Title: Limitation Period for Filing Consumer Complaint
+Text:
+(1) The District Commission, the State Commission or the National Commission shall not admit a complaint unless it is filed within two (2) years from the date on which the cause of action has arisen.
+(2) A complaint may be entertained after the expiry of the period of two years if the complainant satisfies the Commission that he had sufficient cause for not filing the complaint within such period, recording reasons for condonation of delay.

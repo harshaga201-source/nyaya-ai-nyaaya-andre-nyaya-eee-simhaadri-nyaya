@@ -1,0 +1,66 @@
+[ACT: Bharatiya Nyaya Sanhita, 2023 (BNS) & Indian Penal Code, 1860 (IPC) Mapping]
+
+[SECTION: Section 303 BNS (IPC Section 378/379)]
+Act: Bharatiya Nyaya Sanhita, 2023 (BNS) [Formerly Indian Penal Code, 1860 - IPC Section 378 and 379]
+Section: Section 303 BNS (formerly Section 378 & 379 IPC)
+Title: Theft and Punishment for Theft
+Text:
+Whoever, intending to take dishonestly any movable property out of the possession of any person without that person's consent, moves that property in order to such taking, is said to commit theft.
+Punishment: Imprisonment of either description for a term which may extend to three years, or with fine, or with both.
+First-time petty theft where value is less than Rs 5,000 may be punished with community service upon return of stolen property.
+
+[SECTION: Section 318 BNS (IPC Section 415/420)]
+Act: Bharatiya Nyaya Sanhita, 2023 (BNS) [Formerly Indian Penal Code, 1860 - IPC Section 415 and 420]
+Section: Section 318 BNS (formerly Section 415 & 420 IPC)
+Title: Cheating and Dishonestly Inducing Delivery of Property
+Text:
+(1) Whoever, by deceiving any person, fraudulently or dishonestly induces the person so deceived to deliver any property to any person, or to consent that any person shall retain any property commits cheating.
+(4) Section 318(4) BNS (formerly Section 420 IPC): Whoever cheats and thereby dishonestly induces the person deceived to deliver any property, shall be punished with imprisonment of either description for a term which may extend to seven years, and shall also be liable to fine.
+
+[SECTION: Section 316 BNS (IPC Section 405/406)]
+Act: Bharatiya Nyaya Sanhita, 2023 (BNS) [Formerly Indian Penal Code, 1860 - IPC Section 405 and 406]
+Section: Section 316 BNS (formerly Section 405 & 406 IPC)
+Title: Criminal Breach of Trust
+Text:
+Whoever, being in any manner entrusted with property, or with any dominion over property, dishonestly misappropriates or converts to his own use that property, commits criminal breach of trust.
+Punishment: Imprisonment of either description for a term which may extend to five years, or with fine, or with both (formerly 3 years under IPC 406).
+
+[SECTION: Section 115 BNS (IPC Section 323)]
+Act: Bharatiya Nyaya Sanhita, 2023 (BNS) [Formerly Indian Penal Code, 1860 - IPC Section 323]
+Section: Section 115 BNS (formerly Section 323 IPC)
+Title: Voluntarily Causing Hurt
+Text:
+Whoever voluntarily causes hurt to another person shall be punished with imprisonment of either description for a term which may extend to one year, or with fine which may extend to ten thousand rupees (Rs 10,000), or with both.
+Grievous hurt is covered under Section 116 and Section 117 BNS (formerly Section 320/325 IPC).
+
+[SECTION: Section 74 and 75 BNS (IPC Section 354 and 354A)]
+Act: Bharatiya Nyaya Sanhita, 2023 (BNS) [Formerly Indian Penal Code, 1860 - IPC Section 354 and 354A]
+Section: Section 74 & Section 75 BNS (formerly Section 354 & 354A IPC)
+Title: Assault or Criminal Force to Woman with Intent to Outrage Modesty & Sexual Harassment
+Text:
+- Section 74 BNS (formerly Section 354 IPC): Whoever assaults or uses criminal force to any woman, intending to outrage or knowing it to be likely that he will thereby outrage her modesty, shall be punished with imprisonment of not less than one year but which may extend to five years, and fine.
+- Section 75 BNS (formerly Section 354A IPC): A man committing physical contact and advances involving unwelcome and explicit sexual overtures, or a demand or request for sexual favours, or showing pornography against the will of a woman, or making sexually coloured remarks, shall be guilty of sexual harassment, punishable with imprisonment up to three years, or with fine, or both.
+
+[SECTION: Section 85 and 86 BNS (IPC Section 498A)]
+Act: Bharatiya Nyaya Sanhita, 2023 (BNS) [Formerly Indian Penal Code, 1860 - IPC Section 498A]
+Section: Section 85 BNS (formerly Section 498A IPC)
+Title: Husband or Relative of Husband of a Woman Subjecting Her to Cruelty
+Text:
+Whoever, being the husband or the relative of the husband of a woman, subjects such woman to cruelty shall be punished with imprisonment for a term which may extend to three years and shall also be liable to fine.
+Cruelty includes any willful conduct driving the woman to commit suicide or causing grave injury/danger to life, limb or health, or harassment with a view to coercing her or any person related to her to meet any unlawful demand for property or valuable security (dowry).
+
+[SECTION: Section 351 BNS (IPC Section 503/506)]
+Act: Bharatiya Nyaya Sanhita, 2023 (BNS) [Formerly Indian Penal Code, 1860 - IPC Section 503 and 506]
+Section: Section 351 BNS (formerly Section 503 & 506 IPC)
+Title: Criminal Intimidation
+Text:
+Whoever threatens another with any injury to his person, reputation or property, or to the person or reputation of anyone in whom that person is interested, with intent to cause alarm to that person, commits criminal intimidation.
+Punishment: Imprisonment up to two years, or fine, or both; if threat is to cause death or grievous hurt, imprisonment up to seven years.
+
+[SECTION: Section 281 BNS (IPC Section 279)]
+Act: Bharatiya Nyaya Sanhita, 2023 (BNS) [Formerly Indian Penal Code, 1860 - IPC Section 279]
+Section: Section 281 BNS (formerly Section 279 IPC)
+Title: Rash Driving or Riding on a Public Way
+Text:
+Whoever drives any vehicle, or rides, on any public way in a manner so rash or negligent as to endanger human life, or to be likely to cause hurt or injury to any other person, shall be punished with imprisonment of either description for a term which may extend to six months, or with fine which may extend to one thousand rupees, or with both.
+Hit and run cases where the driver escapes without reporting to a police officer or magistrate are covered under Section 106(2) BNS.

@@ -1,0 +1,17 @@
+[ACT: Bharatiya Sakshya Adhiniyam, 2023 (BSA) & Indian Evidence Act, 1872]
+
+[SECTION: Section 61 BSA (Evidence Act Section 65B)]
+Act: Bharatiya Sakshya Adhiniyam, 2023 (BSA) [Formerly Indian Evidence Act, 1872 - Section 65B]
+Section: Section 61 BSA (formerly Section 65B Evidence Act)
+Title: Admissibility of Electronic or Digital Records
+Text:
+(1) Nothing in this Adhiniyam shall apply to deny the admissibility of an electronic or digital record in evidence on the ground that it is an electronic or digital record and such record shall have the same legal effect, validity and enforceability as other documents.
+(2) Electronic records (including emails, WhatsApp messages, digital photographs, SMS, video recordings, audio recordings, server logs) shall be admissible in evidence provided they satisfy the conditions of integrity, device operation and certificate prescribed under Section 63 BSA (formerly Section 65B(4) Evidence Act).
+
+[SECTION: Section 22 BSA (Evidence Act Section 25 and 26)]
+Act: Bharatiya Sakshya Adhiniyam, 2023 (BSA) [Formerly Indian Evidence Act, 1872 - Section 25 and 26]
+Section: Section 22 BSA (formerly Section 25 & 26 Evidence Act)
+Title: Confession to Police Officer Not to be Proved
+Text:
+No confession made to a police officer shall be proved as against a person accused of any offence. Further, no confession made by any person whilst he is in the custody of a police officer, unless it be made in the immediate presence of a Magistrate, shall be proved against such person.
+Any statement obtained by coercion, torture or threat during police interrogation is legally inadmissible as substantive evidence of confession.

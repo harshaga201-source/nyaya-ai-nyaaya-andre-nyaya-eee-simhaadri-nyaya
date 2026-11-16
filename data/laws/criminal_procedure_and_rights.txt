@@ -1,0 +1,85 @@
+[ACT: Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) & Code of Criminal Procedure, 1973 (CrPC)]
+
+[SECTION: Section 35 BNSS (CrPC Section 41 and 41A)]
+Act: Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) [Formerly Code of Criminal Procedure, 1973 - CrPC Section 41 and 41A]
+Section: Section 35 BNSS (formerly Section 41 & 41A CrPC)
+Title: When Police May Arrest Without Warrant & Notice of Appearance
+Text:
+(1) Any police officer may without an order from a Magistrate and without a warrant, arrest any person who commits in his presence a cognizable offence, or against whom a reasonable complaint or credible information exists of an offence punishable with imprisonment for a term exceeding seven years.
+(2) For offences punishable with imprisonment up to seven (7) years, police shall not arrest arbitrarily unless specific conditions are satisfied (preventing further offence, proper investigation, preventing tampering of evidence, ensuring presence).
+(3) Notice of Appearance (formerly Section 41A CrPC, now Section 35(3) BNSS): Where the arrest of a person is not required under the above provisions, the police officer shall issue a Notice of Appearance directing the person to appear before him or at such other place. If the person complies with the notice, he shall not be arrested unless reasons are recorded in writing.
+
+[SECTION: Section 36 BNSS (CrPC Section 41B)]
+Act: Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) [Formerly CrPC Section 41B]
+Section: Section 36 BNSS (formerly Section 41B CrPC)
+Title: Procedure of Arrest and Duties of Officer Making Arrest (Arrest Memo)
+Text:
+Every police officer while making an arrest shall:
+(a) bear an accurate, visible and clear identification of his name and designation;
+(b) prepare a memorandum of arrest (Arrest Memo) which shall be attested by at least one witness who is a member of the family of the person arrested or a respectable member of the locality;
+(c) counter-signed by the person arrested;
+(d) inform the arrested person of his right to have a relative or friend informed of his arrest immediately.
+
+[SECTION: Section 38 BNSS (CrPC Section 41D)]
+Act: Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) [Formerly CrPC Section 41D]
+Section: Section 38 BNSS (formerly Section 41D CrPC)
+Title: Right of Arrested Person to Meet an Advocate of Choice
+Text:
+When any person is arrested and interrogated by the police, he shall be entitled to meet an advocate of his choice during interrogation, though not throughout interrogation.
+
+[SECTION: Section 43 BNSS (CrPC Section 46)]
+Act: Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) [Formerly CrPC Section 46]
+Section: Section 43 BNSS (formerly Section 46 CrPC)
+Title: Arrest of Women and Specific Safeguards
+Text:
+(1) Where a woman is to be arrested, unless the circumstances indicate to the contrary, her submission to custody on an oral intimation of arrest shall be presumed and, unless the police officer is a female, the police officer shall not touch the person of the woman for making an arrest.
+(2) Save in exceptional circumstances, no woman shall be arrested after sunset and before sunrise.
+(3) Where such exceptional circumstances exist, the woman police officer shall, by making a written report, obtain the prior permission of the Judicial Magistrate First Class within whose local jurisdiction the offence is committed or the arrest is to be made.
+(4) Any search of an arrested female must be carried out only by another female with strict regard to decency.
+
+[SECTION: Section 47 BNSS (CrPC Section 50)]
+Act: Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) [Formerly CrPC Section 50]
+Section: Section 47 BNSS (formerly Section 50 CrPC)
+Title: Right to be Informed of Grounds of Arrest and Right to Bail
+Text:
+(1) Every police officer or other person arresting any person without warrant shall forthwith communicate to him full particulars of the offence for which he is arrested or other grounds for such arrest.
+(2) Where a police officer arrests without a warrant any person other than a person accused of a non-bailable offence, he shall inform the person arrested that he is entitled to be released on bail and that he may arrange for sureties on his behalf.
+
+[SECTION: Section 53 BNSS (CrPC Section 54)]
+Act: Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) [Formerly CrPC Section 54]
+Section: Section 53 BNSS (formerly Section 54 CrPC)
+Title: Medical Examination of Arrested Person
+Text:
+When any person is arrested, he shall be examined by a medical officer in the service of Central or State Government, or by a registered medical practitioner, immediately after the arrest is made. A copy of the medical report shall be furnished to the arrested person or nominated relative.
+
+[SECTION: Section 57 BNSS (CrPC Section 57)]
+Act: Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) [Formerly CrPC Section 57]
+Section: Section 57 BNSS (formerly Section 57 CrPC)
+Title: Person Arrested Not to Be Detained Beyond Twenty-Four Hours
+Text:
+No police officer shall detain in custody a person arrested without warrant for a longer period than under all circumstances of the case is reasonable, and such period shall not, in the absence of a special order of a Magistrate under Section 187 BNSS (formerly Section 167 CrPC), exceed twenty-four (24) hours, exclusive of the time necessary for the journey from the place of arrest to the Magistrate's Court. Detention beyond 24 hours without a Magistrate's order is illegal confinement.
+
+[SECTION: Section 173 BNSS (CrPC Section 154)]
+Act: Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) [Formerly CrPC Section 154]
+Section: Section 173 BNSS (formerly Section 154 CrPC)
+Title: Information in Cognizable Cases and Zero FIR
+Text:
+(1) Every information relating to the commission of a cognizable offence, if given orally to an officer in charge of a police station, shall be reduced to writing by him or under his direction, and be read over to the informant.
+(2) A copy of the information as recorded shall be given forthwith, free of cost, to the informant.
+(3) Zero FIR Mandate: Information relating to the commission of a cognizable offence may be given to an officer in charge of ANY police station, irrespective of the area where the offence was committed. The police officer is legally bound to register the FIR (assigned number 0, hence "Zero FIR"), initiate initial inquiry or protection if required, and transfer it to the jurisdictional police station.
+(4) Section 175 BNSS (formerly Section 156(3) CrPC): If an officer in charge of a police station refuses to record the information, the person aggrieved may send the substance of such information in writing to the Superintendent of Police (SP) or file an application before the Magistrate having jurisdiction.
+
+[SECTION: Legal Aid and Tele-Law]
+Act: Legal Services Authorities Act, 1987 & Tele-Law Scheme
+Section: Section 12 Legal Services Authorities Act & Tele-Law 14454
+Title: Free Legal Aid and Access to Justice
+Text:
+Under Article 39A of the Constitution of India and Section 12 of the Legal Services Authorities Act, 1987, free legal services are provided through NALSA (National Legal Services Authority), State Legal Services Authorities (SLSA), and District Legal Services Authorities (DLSA) to:
+- Women and children;
+- Members of Scheduled Castes (SC) or Scheduled Tribes (ST);
+- Victims of human trafficking or beggar;
+- Persons with disabilities or mental illness;
+- Victims of mass disasters, ethnic violence, flood, drought, earthquake or industrial disaster;
+- Persons in custody or juvenile homes;
+- Low-income citizens whose annual income is less than prescribed statutory limits (typically up to Rs 3 Lakhs in most states).
+Tele-Law Service: Citizens can dial toll-free helpline 14454 or visit Common Services Centres (CSC) to consult panel lawyers via video conferencing or voice call for free preliminary legal advice.

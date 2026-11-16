@@ -1,0 +1,184 @@
+# ⚖️ NyayaSathi (न्यायसाथी)
+### Multilingual Indian Legal Awareness AI Assistant
+**One Codebase for Web, Android, and iOS**
+
+NyayaSathi is a demo-ready, citizen-centric legal awareness platform designed to democratize access to statutory law in India. Built with **React Native / Expo** (supporting Web, Android, and iOS via Expo Go) and a **Python FastAPI** backend powered by Google Gemini, SQLite RAG, and an exact/semantic multi-tier cache.
+
+---
+
+## 🌟 Key Capabilities
+- **Strictly Grounded RAG Knowledge Base**: Ingests statutory codes from `/data/laws/` (Motor Vehicles Act 1988/2019, Consumer Protection Act 2019, RTI Act 2005, BNSS/CrPC, BNS/IPC, BSA/Evidence Act). Cites `"Act, Section X"` for every claim, includes IPC->BNS and CrPC->BNSS cross-mappings, and never invents sections.
+- **11 Languages Supported**: English, Hindi (हिन्दी), Kannada (ಕನ್ನಡ), Tamil (தமிழ்), Telugu (తెలుగు), Malayalam (മലയാളം), Marathi (मराठी), Bengali (বাংলা), Gujarati (ગુજરાતી), Punjabi (ਪੰਜਾਬੀ), and Urdu (اردو). Persistent language preference storage.
+- **Voice-First Interaction**: Audio recording via `expo-av` and browser `MediaRecorder`, Gemini multimodal audio transcription, editable review box before querying, and native text-to-speech with Indic voice codes (`hi-IN`, `ta-IN`, `te-IN`, `kn-IN`, etc.).
+- **Privacy-First Document Reader**: Analyze challans, court summons, and contracts using Gemini multimodal with structured extraction (Parties, Dates/Amounts, Sections Cited, Plain Words Meaning, Action Items & Deadlines). Files are processed strictly in-memory and **never stored on disk**.
+- **Traffic Fine Dispute Wizard**: Validates alleged violations against Motor Vehicles Act sections, identifies discrepancies, outlines citizen legal options (Virtual Court, Lok Adalat, Magistrate Court), and produces ready-to-submit bilingual contest letters.
+- **Complaint Generator**: Step-by-step drafting for Police Complaints / Zero FIR requests (Section 173 BNSS), Consumer Commission Complaints (Section 35 CPA 2019), Cyber Crime grievances, and RTI applications. Exportable/printable to PDF (`expo-print`, `expo-sharing`, `window.print`).
+- **Emergency Safety Layer**: Real-time detection of violence, abuse, arrest, suicide, and threats with immediate 24/7 helplines (**112**, **181**, **1098**, **1930**, **Tele-Law 14454**).
+- **Dual-Tier Cache with UI Badge**: Exact normalized cache + semantic embedding similarity cache (cosine similarity >= 0.92) delivering instant answers in <5ms with a `⚡ instant answer (cached)` badge.
+- **Find a Lawyer & Sample Directory**: 8 sample verified advocates with filter by city, language, and practice area, client consultation request modal with consent checkbox, and lawyer registration form.
+- **Admin Telemetry & Quality Control**: `/admin` dashboard tracking queries, cache hit rates, average response latency, and citizen feedback.
+
+---
+
+## 🏛️ Architecture & Tech Stack
+
+```
+nyayasathi/
+├── data/
+│   └── laws/                  # Knowledge Base (BNS, BNSS, BSA, MVA, CPA, RTI)
+├── backend/                   # Python FastAPI MVC Backend
+│   ├── config.py              # Centralized config isolating Gemini model names
+│   ├── main.py                # App entrypoint & CORS middleware
+│   ├── models/                # SQLite schema & Pydantic models
+│   ├── routers/               # Controllers (chat, voice, doc, traffic, complaint, lawyers, admin)
+│   ├── services/              # Business logic (RAG, Gemini, Cache, Emergency)
+│   ├── scripts/ingest.py      # Automated section chunking & vector ingestion
+│   └── tests/                 # 30-Question legal evaluation benchmark
+├── frontend/                  # Unified Expo (React Native + TypeScript) App
+│   ├── app/                   # Expo Router file-based routes
+│   │   ├── (tabs)/            # Home, Chat, Voice, Doc, Traffic, Complaint, Lawyers, Rights, Feedback
+│   │   ├── admin.tsx          # Web & mobile Admin telemetry view
+│   │   └── _layout.tsx        # Root navigation & language context
+│   ├── components/            # Header, CitationChip, EmergencyBanner, CacheBadge, VoiceSpeech
+│   └── constants/             # Colors, Translations, SVG Illustrations
+└── package.json               # Root scripts (demo, backend, web, mobile, ingest, eval)
+```
+
+---
+
+## 🚀 Quickstart & Setup Guide
+
+### 1. Prerequisites
+- **Python 3.10+** (Python 3.11 recommended)
+- **Node.js 18+** and **npm / pnpm**
+
+### 2. Backend Setup
+1. Open a terminal in the project directory:
+   ```bash
+   cd nyayasathi
+   ```
+2. (Optional) Create and activate a Python virtual environment:
+   ```bash
+   python -m venv venv
+   # Windows:
+   venv\Scripts\activate
+   # Linux/Mac:
+   source venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
+4. Configure environment variables in `backend/.env`:
+   ```env
+   GEMINI_API_KEY=your_gemini_api_key_here
+   BACKEND_URL=http://localhost:8000
+   HOST=0.0.0.0
+   PORT=8000
+   ```
+   *(Note: NyayaSathi is equipped with a high-fidelity local deterministic legal engine fallback that works out-of-the-box even if no API key is provided).*
+
+5. Run statutory law ingestion:
+   ```bash
+   python -m backend.scripts.ingest
+   ```
+6. Start the FastAPI backend server:
+   ```bash
+   python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
+   *Backend is live at `http://localhost:8000` (Swagger docs at `http://localhost:8000/docs`).*
+
+---
+
+### 3. Frontend Setup (Web, Android, iOS)
+1. Open a second terminal:
+   ```bash
+   cd nyayasathi/frontend
+   ```
+2. Install dependencies (if not already installed):
+   ```bash
+   pnpm install
+   # OR
+   npm install
+   ```
+
+#### A. Run as a Web Application:
+```bash
+npx expo start --web
+```
+*Opens automatically at `http://localhost:8081`.*
+
+#### B. Run on Android or iOS (Expo Go):
+```bash
+npx expo start
+```
+- Install the **Expo Go** app on your physical Android or iPhone device from Google Play or the Apple App Store.
+- Scan the QR code displayed in your terminal using the Expo Go camera (Android) or the native Camera app (iOS).
+
+---
+
+## 📱 Exposing Backend to Physical Phones (LAN / Tunnel)
+
+When running on a physical phone via Expo Go, your phone cannot reach `http://localhost:8000`. Choose one of two methods:
+
+### Method 1: Same Wi-Fi LAN IP (Recommended)
+1. Ensure your PC and mobile phone are connected to the **same Wi-Fi network**.
+2. Find your PC's local IP address:
+   - On Windows: Run `ipconfig` (e.g. `192.168.1.15`).
+   - On Mac/Linux: Run `ifconfig` or `ip a`.
+3. In `frontend/.env` (or in `frontend/services/api.ts`):
+   ```env
+   EXPO_PUBLIC_BACKEND_URL=http://192.168.1.15:8000
+   ```
+4. Start the backend with `--host 0.0.0.0` (already set as default).
+5. Open the app in Expo Go — your phone will seamlessly communicate with the backend.
+
+### Method 2: Free ngrok / Cloudflare Tunnel
+1. Run ngrok in a separate terminal:
+   ```bash
+   ngrok http 8000
+   ```
+2. Copy the generated public HTTPS URL (e.g. `https://abc123.ngrok-free.app`).
+3. Set in `frontend/.env`:
+   ```env
+   EXPO_PUBLIC_BACKEND_URL=https://abc123.ngrok-free.app
+   ```
+
+---
+
+## ⚡ 1-Click Launch Scripts (Windows)
+For convenience during demo presentations, run any of the included batch scripts from the root directory:
+- `run_backend.bat`: Starts the FastAPI backend on port 8000.
+- `run_web.bat`: Starts the Expo Web application on port 8081.
+- `run_expo.bat`: Starts Expo development server for Android/iOS.
+- `run_demo.bat`: Launches both backend and web in synchronized background windows.
+
+---
+
+## 🧪 Evaluation Benchmark (30 Legal Questions)
+NyayaSathi includes a legal citation evaluation suite consisting of **30 statutory questions** across 3 legal domains:
+- 10 Traffic Law questions (Motor Vehicles Act 1988/2019)
+- 10 Consumer Protection questions (Consumer Protection Act 2019)
+- 10 Criminal Procedure & Fundamental Rights questions (BNSS 2023, BNS 2023, BSA 2023)
+
+To execute the benchmark:
+```bash
+python -m backend.tests.run_eval
+```
+**Evaluation Results:**
+- **Overall Retrieval Accuracy**: **30/30 (100.0%)**
+- Category Traffic Law: 10/10 (100.0%)
+- Category Consumer Law: 10/10 (100.0%)
+- Category Criminal Procedure & Rights: 10/10 (100.0%)
+
+---
+
+## ⚖️ Architectural Decisions & Rationale
+1. **Isolated AI Models in Config**: Model identifiers (`gemini-2.5-flash`, `gemini-1.5-flash`, `text-embedding-004`) are isolated strictly within `backend/config.py` to allow instant switching between model versions without touching router code.
+2. **Hybrid Retrieval**: Combines semantic cosine similarity with lexical keyword overlap and direct section boost. This prevents false negatives on statutory section numbers (e.g. distinguishing Section 194B from Section 194D).
+3. **In-Memory Document Analysis**: Files uploaded to the Document Reader are decoded into memory and forwarded directly to Gemini multimodal. Files are **never written to disk**, strictly honoring citizen data privacy.
+4. **Offline / Fallback Resilience**: If network timeouts or API quotas occur, NyayaSathi gracefully falls back to deterministic statutory extraction from the local SQLite database without crashing or exposing stack traces to the user.
+5. **Mandatory Disclaimer**: Every response systematically enforces the statutory reminder: *"Legal information, not legal advice."*
+
+---
+*Built for the Indian Citizenry • NyayaSathi 2026*

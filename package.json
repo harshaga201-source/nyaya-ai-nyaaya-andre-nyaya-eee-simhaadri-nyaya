@@ -1,0 +1,25 @@
+{
+  "name": "nyayasathi",
+  "version": "1.0.0",
+  "description": "NyayaSathi - Multilingual Indian Legal Awareness AI Assistant (Web, Android, iOS)",
+  "scripts": {
+    "backend": "python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload",
+    "ingest": "python -m backend.scripts.ingest",
+    "eval": "python -m backend.tests.run_eval",
+    "web": "cd frontend && npx expo start --web",
+    "mobile": "cd frontend && npx expo start",
+    "demo": "node scripts/start_demo.js"
+  },
+  "keywords": [
+    "legal",
+    "ai",
+    "gemini",
+    "rag",
+    "expo",
+    "fastapi",
+    "react-native",
+    "india"
+  ],
+  "author": "NyayaSathi Project",
+  "license": "MIT"
+}

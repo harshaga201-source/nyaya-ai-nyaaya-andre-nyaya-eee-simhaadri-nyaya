@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+.pnpm-store/
+
+# Expo & Metro
+.expo/
+frontend/.expo/
+frontend/dist/
+web-build/
+*.tsbuildinfo
+
+# Python & Environment
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+backend/.env
+
+# SQLite databases & temp files
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Tools and binaries
+tools/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE & Editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
