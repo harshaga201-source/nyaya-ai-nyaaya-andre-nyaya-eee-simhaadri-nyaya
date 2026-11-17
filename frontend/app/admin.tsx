@@ -12,11 +12,13 @@ import { useRouter } from 'expo-router';
 import { Colors } from '../constants/Colors';
 import { Header } from '../components/Header';
 import { LanguageContext } from './_layout';
+import { getUI } from '../constants/Translations';
 import { fetchAdminStats, getBackendUrl } from '../services/api';
 
 export default function AdminScreen() {
   const router = useRouter();
   const { language, setLanguage } = useContext(LanguageContext);
+  const t = getUI(language);
 
   const [stats, setStats] = useState<any>(null);
   const [feedbackList, setFeedbackList] = useState<any[]>([]);
@@ -57,11 +59,11 @@ export default function AdminScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.topNav}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Text style={styles.backText}>← Back to App</Text>
+            <Text style={styles.backText}>{t.backToApp}</Text>
           </TouchableOpacity>
-          <Text style={styles.adminTitle}>Admin Quality & Performance Control</Text>
+          <Text style={styles.adminTitle}>{t.adTitle}</Text>
           <TouchableOpacity style={styles.refreshBtn} onPress={loadData}>
-            <Text style={styles.refreshText}>🔄 Refresh</Text>
+            <Text style={styles.refreshText}>{t.refresh}</Text>
           </TouchableOpacity>
         </View>
 
@@ -74,39 +76,39 @@ export default function AdminScreen() {
             {/* KPI Cards Grid */}
             <View style={styles.kpiGrid}>
               <View style={styles.kpiCard}>
-                <Text style={styles.kpiLabel}>Total Queries</Text>
+                <Text style={styles.kpiLabel}>{t.adTotal}</Text>
                 <Text style={styles.kpiValue}>{stats?.total_queries ?? 0}</Text>
-                <Text style={styles.kpiSub}>Processed by RAG Engine</Text>
+                <Text style={styles.kpiSub}>{t.adProcessed}</Text>
               </View>
 
               <View style={[styles.kpiCard, styles.kpiHighlight]}>
-                <Text style={styles.kpiLabel}>Cache Hit Rate</Text>
+                <Text style={styles.kpiLabel}>{t.adCacheRate}</Text>
                 <Text style={[styles.kpiValue, { color: Colors.goldDark }]}>
                   {stats?.cache_hit_rate_percent ?? 0}%
                 </Text>
-                <Text style={styles.kpiSub}>Exact & Semantic Caching</Text>
+                <Text style={styles.kpiSub}>{t.adCaching}</Text>
               </View>
 
               <View style={styles.kpiCard}>
-                <Text style={styles.kpiLabel}>Avg Response Latency</Text>
+                <Text style={styles.kpiLabel}>{t.adLatency}</Text>
                 <Text style={styles.kpiValue}>{stats?.avg_response_time_ms ?? 0} ms</Text>
-                <Text style={styles.kpiSub}>Fast statutory retrieval</Text>
+                <Text style={styles.kpiSub}>{t.adFast}</Text>
               </View>
 
               <View style={styles.kpiCard}>
-                <Text style={styles.kpiLabel}>Citizen Feedback</Text>
+                <Text style={styles.kpiLabel}>{t.adFeedback}</Text>
                 <Text style={styles.kpiValue}>
                   {stats?.total_feedback ?? 0} ({stats?.avg_rating ?? 5.0} ★)
                 </Text>
-                <Text style={styles.kpiSub}>Flagged count: {stats?.flagged_count ?? 0}</Text>
+                <Text style={styles.kpiSub}>{t.adFlaggedCount}{stats?.flagged_count ?? 0}</Text>
               </View>
             </View>
 
             {/* Flagged and Recent Feedback */}
             <View style={styles.tableCard}>
-              <Text style={styles.sectionHeading}>🚩 Citizen Feedback & Flagged Responses</Text>
+              <Text style={styles.sectionHeading}>{t.adFeedbackHeading}</Text>
               {feedbackList.length === 0 ? (
-                <Text style={styles.emptyText}>No feedback submitted yet.</Text>
+                <Text style={styles.emptyText}>{t.adNoFeedback}</Text>
               ) : (
                 feedbackList.map((item) => (
                   <View
@@ -118,12 +120,12 @@ export default function AdminScreen() {
                       <Text style={styles.fbRating}>{'★'.repeat(item.rating)}</Text>
                       {item.is_flagged ? (
                         <View style={styles.flagBadge}>
-                          <Text style={styles.flagText}>FLAGGED FOR AUDIT</Text>
+                          <Text style={styles.flagText}>{t.adFlagged}</Text>
                         </View>
                       ) : null}
                     </View>
                     <Text style={styles.fbComment}>
-                      {item.comment || '(No written comment provided)'}
+                      {item.comment || t.noComment}
                     </Text>
                     <Text style={styles.fbDate}>{item.created_at}</Text>
                   </View>
@@ -133,9 +135,9 @@ export default function AdminScreen() {
 
             {/* Recent Queries & Cache Speed-up Log */}
             <View style={styles.tableCard}>
-              <Text style={styles.sectionHeading}>⚡ Telemetry Log & Cache Speed-up</Text>
+              <Text style={styles.sectionHeading}>{t.adTelemetry}</Text>
               {chatLogs.length === 0 ? (
-                <Text style={styles.emptyText}>No query logs recorded yet.</Text>
+                <Text style={styles.emptyText}>{t.adNoLogs}</Text>
               ) : (
                 chatLogs.slice(0, 15).map((log) => (
                   <View key={log.id} style={styles.logItem}>
@@ -149,7 +151,7 @@ export default function AdminScreen() {
                         ]}
                       >
                         <Text style={styles.cachePillText}>
-                          {log.cached ? '⚡ CACHE HIT' : '🔄 RAG RUN'}
+                          {log.cached ? t.adCacheHit : t.adRagRun}
                         </Text>
                       </View>
                       <Text style={styles.logTime}>{log.response_time_ms} ms</Text>
@@ -184,10 +186,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   backBtn: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
-    borderWidth: 1,
-    borderRadius: 8,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#111111',
+    borderWidth: 2,
+    borderRadius: 0,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
@@ -203,12 +205,12 @@ const styles = StyleSheet.create({
   },
   refreshBtn: {
     backgroundColor: Colors.navy,
-    borderRadius: 8,
+    borderRadius: 0,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   refreshText: {
-    color: '#FFFFFF',
+    color: '#FFFDF7',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -225,15 +227,15 @@ const styles = StyleSheet.create({
   kpiCard: {
     flex: 1,
     minWidth: 180,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    backgroundColor: '#FFFDF7',
+    borderRadius: 0,
     padding: 16,
     borderColor: Colors.cardBorder,
-    borderWidth: 1,
+    borderWidth: 2,
   },
   kpiHighlight: {
     borderColor: Colors.gold,
-    borderWidth: 1.5,
+    borderWidth: 3,
   },
   kpiLabel: {
     fontSize: 12,
@@ -252,11 +254,11 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
   },
   tableCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: '#FFFDF7',
+    borderRadius: 0,
     padding: 18,
     borderColor: Colors.cardBorder,
-    borderWidth: 1,
+    borderWidth: 2,
     marginBottom: 16,
   },
   sectionHeading: {
@@ -265,7 +267,7 @@ const styles = StyleSheet.create({
     color: Colors.navy,
     marginBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: '#ECE7DC',
     paddingBottom: 8,
   },
   emptyText: {
@@ -275,16 +277,16 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   feedbackItem: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
+    backgroundColor: '#FFFDF7',
+    borderRadius: 0,
     padding: 12,
     marginBottom: 8,
-    borderColor: '#E2E8F0',
-    borderWidth: 1,
+    borderColor: '#111111',
+    borderWidth: 2,
   },
   flaggedItem: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#F87171',
+    backgroundColor: '#FFE9E3',
+    borderColor: '#FF3B00',
   },
   fbHead: {
     flexDirection: 'row',
@@ -298,18 +300,18 @@ const styles = StyleSheet.create({
     color: Colors.navy,
   },
   fbRating: {
-    color: '#EAB308',
+    color: '#FFD400',
     fontSize: 13,
   },
   flagBadge: {
-    backgroundColor: '#DC2626',
-    borderRadius: 6,
+    backgroundColor: '#FF3B00',
+    borderRadius: 0,
     paddingHorizontal: 6,
     paddingVertical: 2,
     marginLeft: 'auto',
   },
   flagText: {
-    color: '#FFFFFF',
+    color: '#FFFDF7',
     fontSize: 10,
     fontWeight: '800',
   },
@@ -326,7 +328,7 @@ const styles = StyleSheet.create({
   logItem: {
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: '#ECE7DC',
   },
   logTop: {
     flexDirection: 'row',
@@ -344,15 +346,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cachePill: {
-    borderRadius: 6,
+    borderRadius: 0,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
   cachePillHit: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#FFD400',
   },
   cachePillMiss: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#ECE7DC',
   },
   cachePillText: {
     fontSize: 10,

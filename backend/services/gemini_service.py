@@ -7,6 +7,8 @@ import json
 import logging
 from typing import List, Optional, Dict, Any
 from backend.config import settings
+from backend.services.localization import DISCLAIMER, detect_category, get_templates
+from backend.services.translate import translate_texts
 
 logger = logging.getLogger(__name__)
 
@@ -122,8 +124,10 @@ class GeminiService:
             except Exception as e:
                 logger.warning(f"Gemini audio transcription failed: {e}. Using fallback.")
                 
-        # Deterministic simulation for voice testing when offline
-        return "What are my legal rights if the police stop my vehicle or arrest me without a warrant?"
+        # No API key / network: do NOT fabricate a transcript. Repeating a canned
+        # sentence made every voice query look identical. The client shows a clear
+        # "could not transcribe, please type" message when this is empty.
+        return ""
 
     def analyze_document_multimodal(self, file_bytes: bytes, mime_type: str, prompt: str) -> str:
         """Analyze legal document (PDF / image) using Gemini multimodal."""
@@ -143,15 +147,55 @@ class GeminiService:
                 logger.warning(f"Gemini multimodal document analysis failed: {e}.")
         return ""
 
+    def _render_localized(
+        self,
+        user_query: str,
+        lang: str,
+        sources: List[Dict[str, Any]],
+        category: str | None = None,
+    ) -> str:
+        """Render a deterministic answer in the requested Indian language."""
+        templates = get_templates(lang)
+        cat = category or detect_category(user_query)
+
+        if not sources:
+            return str(templates["no_sources"])
+
+        # Translate statutory excerpts into the citizen's language so the answer
+        # is genuinely in that language, not just with localized labels.
+        excerpts = [(s.get("content") or "").strip() for s in sources[:3]]
+        excerpts = [(e[:520] + "...") if len(e) > 520 else e for e in excerpts]
+        local_excerpts = translate_texts(excerpts, lang)
+
+        out = [str(templates["intro"]).format(query=user_query)]
+        for idx, source in enumerate(sources[:3], 1):
+            out.append(
+                f"{idx}. [{source['act']}, {source['section']}] — {source['title']}"
+            )
+            if local_excerpts[idx - 1]:
+                out.append(f"{templates['source_label']}: {local_excerpts[idx - 1]}\n")
+
+        out.append(str(templates["safeguards_heading"]))
+        bullets = templates["bullets"].get(  # type: ignore[union-attr]
+            cat,
+            templates["bullets"]["default"],  # type: ignore[index]
+        )
+        out.extend(bullets)
+        out.append("\n" + str(templates["note"]) + "\n\n" + DISCLAIMER)
+        return "\n".join(out)
+
     def _local_synthesis(self, prompt: str, system_instruction: Optional[str]) -> str:
         """Robust local response generator obeying RAG constraints, statutory citations, and citizens' rights."""
         lines = prompt.split("\n")
         user_query = ""
         req_lang = "en"
-        
+        search_query = ""
+
         for line in lines:
             if "USER QUESTION:" in line:
                 user_query = line.replace("USER QUESTION:", "").strip()
+            elif "SEARCH QUERY" in line:
+                search_query = line.split(":", 1)[1].strip()
             elif "REQUESTED LANGUAGE:" in line:
                 val = line.replace("REQUESTED LANGUAGE:", "").strip()
                 if "(" in val and ")" in val:
@@ -193,7 +237,14 @@ class GeminiService:
                 "title": title,
                 "content": body
             })
-            
+
+        cat = detect_category(f"{user_query} {search_query}")
+
+        # Non-English answers are rendered from localized templates. This is what
+        # makes the offline engine honor the language selected by the citizen.
+        if req_lang != "en":
+            return self._render_localized(user_query, req_lang, sources, cat)
+
         if not sources:
             if req_lang == "hi":
                 return (

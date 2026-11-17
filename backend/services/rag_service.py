@@ -8,6 +8,8 @@ from backend.config import settings
 from backend.models.database import get_db
 from backend.models.schemas import Citation
 from backend.services.gemini_service import gemini_service
+from backend.services.translate import is_indic, translate_to_english
+from backend.services.localization import detect_category
 
 logger = logging.getLogger(__name__)
 
@@ -90,12 +92,17 @@ def tokenize(text: str) -> set[str]:
 class RAGService:
     def retrieve_top_chunks(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         """Retrieve top k legal chunks using Hybrid Search (Cosine Embedding + Lexical BM25 Overlap)."""
-        query_vec = np.array(gemini_service.get_embedding(query), dtype=np.float32)
+        # The legal corpus is in English. Bridge an Indic query with an English
+        # translation so lexical overlap and the hashed fallback embedding both
+        # match the statute text (ignored silently when translation is unavailable).
+        en_query = translate_to_english(query) if is_indic(query) else ""
+        retrieval_text = f"{query} {en_query}".strip() if en_query else query
+        query_vec = np.array(gemini_service.get_embedding(retrieval_text), dtype=np.float32)
         norm_q = np.linalg.norm(query_vec)
-        q_tokens = tokenize(query)
+        q_tokens = tokenize(retrieval_text)
 
         # Extract explicit section mentions if any (e.g. "section 184", "41A")
-        sec_mentions = re.findall(r"(?:section|sec\.?|धारा)\s*(\d+[a-z]?)", query.lower())
+        sec_mentions = re.findall(r"(?:section|sec\.?|धारा|धारा)\s*(\d+[a-z]?)", retrieval_text.lower())
 
         candidates = []
         with get_db() as conn:
@@ -148,6 +155,11 @@ class RAGService:
         target_lang = requested_language if requested_language and requested_language != "en" else (detected_lang if detected_lang != "en" else "en")
         target_lang_name = settings.LANGUAGE_NAMES.get(target_lang, "English")
 
+        # The legal corpus is in English, so an Indic query needs an English
+        # bridge for lexical/embedding retrieval (added inside retrieve_top_chunks).
+        en_query = translate_to_english(query) if is_indic(query) else ""
+        category = detect_category(f"{query} {en_query}")
+
         # 1. Retrieve top 5 chunks
         top_chunks = self.retrieve_top_chunks(query, top_k=settings.TOP_K_CHUNKS)
 
@@ -169,6 +181,7 @@ class RAGService:
         
         prompt = f"""
 USER QUESTION: {query}
+SEARCH QUERY (English translation for retrieval): {en_query or query}
 REQUESTED LANGUAGE: {target_lang_name} ({target_lang})
 
 RETRIEVED LEGAL SECTIONS:

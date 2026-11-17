@@ -2,12 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, Platform } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { EmergencyPayload } from '../services/api';
+import { getUI } from '../constants/Translations';
 
 interface EmergencyBannerProps {
   emergency: EmergencyPayload;
+  language?: string;
 }
 
-export const EmergencyBanner: React.FC<EmergencyBannerProps> = ({ emergency }) => {
+export const EmergencyBanner: React.FC<EmergencyBannerProps> = ({ emergency, language = 'en' }) => {
+  const t = getUI(language);
   if (!emergency || !emergency.is_emergency) return null;
 
   const handleCall = (num: string) => {
@@ -25,9 +28,9 @@ export const EmergencyBanner: React.FC<EmergencyBannerProps> = ({ emergency }) =
       <View style={styles.headerRow}>
         <Text style={styles.alertIcon}>🚨</Text>
         <View style={{ flex: 1 }}>
-          <Text style={styles.title}>EMERGENCY HELPLINES & SAFETY FIRST</Text>
+          <Text style={styles.title}>{t.emTitle}</Text>
           <Text style={styles.subtitle}>
-            {emergency.advisory || 'If you or someone else is in immediate danger or facing unlawful detention, reach out immediately.'}
+            {emergency.advisory || t.emAdvisory}
           </Text>
         </View>
       </View>
@@ -47,7 +50,7 @@ export const EmergencyBanner: React.FC<EmergencyBannerProps> = ({ emergency }) =
               <Text style={styles.serviceName}>{h.service}</Text>
               <Text style={styles.serviceDesc} numberOfLines={1}>{h.description}</Text>
             </View>
-            <Text style={styles.callAction}>📞 Call</Text>
+            <Text style={styles.callAction}>{t.emCall}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -59,8 +62,8 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.emergencyBg,
     borderColor: Colors.emergencyBorder,
-    borderWidth: 1.5,
-    borderRadius: 12,
+    borderWidth: 3,
+    borderRadius: 0,
     padding: 12,
     marginVertical: 10,
   },
@@ -81,7 +84,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 12,
-    color: '#7F1D1D',
+    color: '#C22A00',
     marginTop: 2,
     lineHeight: 16,
   },
@@ -91,37 +94,37 @@ const styles = StyleSheet.create({
   helplineCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#FECACA',
-    borderWidth: 1,
-    borderRadius: 8,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#FF3B00',
+    borderWidth: 2,
+    borderRadius: 0,
     padding: 8,
   },
   badgeNumber: {
-    backgroundColor: '#DC2626',
-    borderRadius: 6,
+    backgroundColor: '#FF3B00',
+    borderRadius: 0,
     paddingHorizontal: 8,
     paddingVertical: 4,
     marginRight: 10,
   },
   numberText: {
-    color: '#FFFFFF',
+    color: '#FFFDF7',
     fontWeight: '800',
     fontSize: 14,
   },
   serviceName: {
     fontWeight: '700',
     fontSize: 13,
-    color: '#1E293B',
+    color: '#111111',
   },
   serviceDesc: {
     fontSize: 11,
-    color: '#64748B',
+    color: '#6B6963',
   },
   callAction: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#DC2626',
+    color: '#FF3B00',
     marginLeft: 8,
   },
 });

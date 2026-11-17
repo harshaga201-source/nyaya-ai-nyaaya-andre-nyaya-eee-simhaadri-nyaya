@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Colors } from '../../constants/Colors';
-import { TRANSLATIONS } from '../../constants/Translations';
+import { Colors, BORDER, BORDER_THIN } from '../../constants/Colors';
+import { getUI } from '../../constants/Translations';
 import { LanguageContext } from '../_layout';
 import { Header } from '../../components/Header';
 import { ScalesOfJustice, GavelIcon, CourthousePillars, LawBooks } from '../../constants/Illustrations';
@@ -10,49 +10,49 @@ import { ScalesOfJustice, GavelIcon, CourthousePillars, LawBooks } from '../../c
 export default function HomeScreen() {
   const router = useRouter();
   const { language, setLanguage } = useContext(LanguageContext);
-  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+  const t = getUI(language);
 
   const features = [
     {
       id: 'document',
       title: t.docReaderTitle,
       description: t.docReaderDesc,
-      icon: <LawBooks size={36} color={Colors.gold} />,
+      icon: <LawBooks size={36} color={Colors.ink} />,
       route: '/document',
     },
     {
       id: 'traffic',
       title: t.trafficTitle,
       description: t.trafficDesc,
-      icon: <GavelIcon size={36} color={Colors.gold} />,
+      icon: <GavelIcon size={36} color={Colors.ink} />,
       route: '/traffic',
     },
     {
       id: 'complaint',
       title: t.complaintTitle,
       description: t.complaintDesc,
-      icon: <CourthousePillars size={36} color={Colors.gold} />,
+      icon: <CourthousePillars size={36} color={Colors.ink} />,
       route: '/complaint',
     },
     {
       id: 'lawyers',
       title: t.lawyerTitle,
       description: t.lawyerDesc,
-      icon: <ScalesOfJustice size={36} color={Colors.gold} />,
-      route: '/lawyers',
+      icon: <ScalesOfJustice size={36} color={Colors.ink} />,
+      route: '/find-lawyer',
     },
     {
       id: 'rights',
       title: t.rightsTitle,
       description: t.rightsDesc,
-      icon: <CourthousePillars size={36} color={Colors.navyLight} />,
+      icon: <CourthousePillars size={36} color={Colors.ink} />,
       route: '/rights',
     },
     {
       id: 'feedback',
       title: t.feedbackTab,
-      description: "Rate answers, submit suggestions, and view admin accuracy metrics.",
-      icon: <LawBooks size={36} color={Colors.navyLight} />,
+      description: t.feedbackDesc,
+      icon: <LawBooks size={36} color={Colors.ink} />,
       route: '/feedback',
     },
   ];
@@ -101,8 +101,8 @@ export default function HomeScreen() {
             >
               <Text style={styles.bigButtonIcon}>💬</Text>
               <View>
-                <Text style={[styles.bigButtonTitle, { color: Colors.navy }]}>{t.askByTyping}</Text>
-                <Text style={[styles.bigButtonSub, { color: Colors.textSecondary }]}>{t.typingSubtitle}</Text>
+                <Text style={[styles.bigButtonTitle, { color: Colors.ink }]}>{t.askByTyping}</Text>
+                <Text style={[styles.bigButtonSub, { color: Colors.faintInk }]}>{t.typingSubtitle}</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -110,7 +110,7 @@ export default function HomeScreen() {
 
         {/* Feature Cards Grid */}
         <View style={styles.gridSection}>
-          <Text style={styles.sectionTitle}>Essential Legal Workflows</Text>
+          <Text style={styles.sectionTitle}>{t.workflowsTitle}</Text>
           <View style={styles.cardsGrid}>
             {features.map((item) => (
               <TouchableOpacity
@@ -123,7 +123,7 @@ export default function HomeScreen() {
                 <Text style={styles.cardTitle}>{item.title}</Text>
                 <Text style={styles.cardDesc}>{item.description}</Text>
                 <View style={styles.cardFooter}>
-                  <Text style={styles.cardActionText}>Launch Tool →</Text>
+                  <Text style={styles.cardActionText}>{t.launchTool}</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -133,9 +133,7 @@ export default function HomeScreen() {
         {/* Legal Disclaimer Footer */}
         <View style={styles.disclaimerContainer}>
           <Text style={styles.disclaimerText}>⚖️ {t.disclaimer}</Text>
-          <Text style={styles.subDisclaimer}>
-            NyayaSathi operates on verified statutory provisions (BNS, BNSS, BSA, MVA, CPA, RTI). In case of legal emergency, dial 112 or Tele-Law 14454.
-          </Text>
+          <Text style={styles.subDisclaimer}>{t.footerNote}</Text>
         </View>
       </ScrollView>
     </View>
@@ -155,19 +153,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   heroCard: {
-    backgroundColor: Colors.navy,
-    borderRadius: 20,
+    backgroundColor: Colors.yellow,
     padding: 22,
-    borderWidth: 1.5,
-    borderColor: Colors.gold,
+    borderWidth: BORDER + 1,
+    borderColor: Colors.pitchBlack,
     marginBottom: 20,
     ...Platform.select({
-      web: {
-        boxShadow: '0 8px 24px rgba(11, 31, 58, 0.15)',
-      },
-      default: {
-        elevation: 4,
-      },
+      web: { boxShadow: '8px 8px 0 #111111' },
+      default: { elevation: 4 },
     }),
   },
   heroHeader: {
@@ -177,39 +170,44 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   badge: {
-    backgroundColor: 'rgba(201, 162, 39, 0.2)',
-    borderColor: Colors.gold,
-    borderWidth: 1,
-    borderRadius: 16,
+    backgroundColor: Colors.pitchBlack,
+    borderColor: Colors.pitchBlack,
+    borderWidth: 2,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   badgeText: {
-    color: Colors.gold,
-    fontSize: 12,
-    fontWeight: '700',
+    color: Colors.yellow,
+    fontSize: 11,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   adminLink: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
+    backgroundColor: Colors.pitchBlack,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 6,
+    borderWidth: 2,
+    borderColor: Colors.pitchBlack,
   },
   adminLinkText: {
-    color: '#E2E8F0',
+    color: Colors.yellow,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
   heroTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    lineHeight: 30,
+    fontSize: 26,
+    fontWeight: '900',
+    color: Colors.ink,
+    lineHeight: 34,
     marginBottom: 8,
+    textTransform: 'uppercase',
   },
   heroDesc: {
-    fontSize: 14,
-    color: '#E2E8F0',
+    fontSize: 14.5,
+    fontWeight: '600',
+    color: Colors.ink,
     lineHeight: 20,
     marginBottom: 20,
   },
@@ -222,42 +220,53 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
-    borderRadius: 14,
+    borderRadius: 0,
+    borderWidth: BORDER,
+    borderColor: Colors.pitchBlack,
     ...Platform.select({
       web: {
         cursor: 'pointer',
+        boxShadow: '5px 5px 0 #111111',
       },
+      default: { elevation: 4 },
     }),
   },
   voiceButton: {
-    backgroundColor: Colors.gold,
+    backgroundColor: Colors.pitchBlack,
   },
   typeButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.card,
   },
   bigButtonIcon: {
-    fontSize: 28,
+    fontSize: 30,
     marginRight: 12,
   },
   bigButtonTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: Colors.navyDark,
+    fontSize: 17,
+    fontWeight: '900',
+    color: Colors.yellow,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   bigButtonSub: {
     fontSize: 12,
-    color: '#4B3F10',
+    color: '#D9D7CF',
     marginTop: 2,
   },
   gridSection: {
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: Colors.navy,
+    fontSize: 17,
+    fontWeight: '900',
+    color: Colors.yellow,
+    backgroundColor: Colors.pitchBlack,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     marginBottom: 14,
-    letterSpacing: 0.2,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   cardsGrid: {
     flexDirection: 'row',
@@ -265,61 +274,71 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   featureCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: '#FFFDF7',
+    borderRadius: 0,
     padding: 16,
     borderColor: Colors.cardBorder,
-    borderWidth: 1,
+    borderWidth: 2,
     width: Platform.OS === 'web' ? '48%' : '100%',
     minWidth: 280,
     flexGrow: 1,
     ...Platform.select({
       web: {
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+        boxShadow: '5px 5px 0 #111111',
         cursor: 'pointer',
       },
       default: {
-        elevation: 2,
+        elevation: 4,
       },
     }),
   },
   cardIconWrapper: {
-    backgroundColor: '#F8F9FC',
+    backgroundColor: Colors.yellow,
     alignSelf: 'flex-start',
-    borderRadius: 12,
+    borderRadius: 0,
     padding: 8,
     marginBottom: 10,
-    borderColor: '#E2E8F0',
-    borderWidth: 1,
+    borderColor: Colors.pitchBlack,
+    borderWidth: BORDER_THIN,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.navy,
+    fontSize: 17,
+    fontWeight: '900',
+    color: Colors.ink,
     marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   cardDesc: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: Colors.mutedInk,
     lineHeight: 18,
     marginBottom: 12,
   },
   cardFooter: {
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    paddingTop: 8,
+    borderTopWidth: BORDER_THIN,
+    borderTopColor: Colors.pitchBlack,
+    paddingTop: 10,
   },
   cardActionText: {
     fontSize: 13,
-    fontWeight: '700',
-    color: Colors.goldDark,
+    fontWeight: '900',
+    color: Colors.ink,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    backgroundColor: Colors.yellow,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: BORDER_THIN,
+    borderColor: Colors.pitchBlack,
   },
   disclaimerContainer: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
+    backgroundColor: '#ECE7DC',
+    borderRadius: 0,
     padding: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderWidth: 2,
+    borderColor: '#111111',
     marginTop: 8,
   },
   disclaimerText: {

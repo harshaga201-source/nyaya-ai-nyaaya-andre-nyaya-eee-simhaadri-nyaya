@@ -2,18 +2,21 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { CitationItem } from '../services/api';
+import { getUI } from '../constants/Translations';
 
 interface CitationChipsProps {
   citations: CitationItem[];
   onSelectCitation?: (citation: CitationItem) => void;
+  language?: string;
 }
 
-export const CitationChips: React.FC<CitationChipsProps> = ({ citations, onSelectCitation }) => {
+export const CitationChips: React.FC<CitationChipsProps> = ({ citations, onSelectCitation, language = 'en' }) => {
+  const t = getUI(language);
   if (!citations || citations.length === 0) return null;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerLabel}>Statutory Citations:</Text>
+      <Text style={styles.headerLabel}>{t.citationsLabel}</Text>
       <View style={styles.chipsWrapper}>
         {citations.map((c, idx) => (
           <TouchableOpacity
@@ -37,7 +40,7 @@ const styles = StyleSheet.create({
   container: {
     marginTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: '#111111',
     paddingTop: 8,
   },
   headerLabel: {
@@ -56,10 +59,10 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderColor: '#CBD5E1',
-    borderWidth: 1,
-    borderRadius: 14,
+    backgroundColor: '#ECE7DC',
+    borderColor: '#111111',
+    borderWidth: 2,
+    borderRadius: 0,
     paddingHorizontal: 8,
     paddingVertical: 4,
     maxWidth: 260,

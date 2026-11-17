@@ -3,180 +3,343 @@
     "id": "traffic-1",
     "category": "traffic",
     "question": "What is the fine for driving without wearing a helmet on a two-wheeler?",
-    "expected_sections": ["129", "194D"]
+    "expected_sections": [
+      "129",
+      "194D"
+    ]
   },
   {
     "id": "traffic-2",
     "category": "traffic",
     "question": "What is the penalty for exceeding speed limits in a light motor vehicle?",
-    "expected_sections": ["112", "183"]
+    "expected_sections": [
+      "112",
+      "183"
+    ]
   },
   {
     "id": "traffic-3",
     "category": "traffic",
     "question": "Is wearing a seatbelt compulsory for the driver and passengers under the Motor Vehicles Act?",
-    "expected_sections": ["194B"]
+    "expected_sections": [
+      "194B"
+    ]
   },
   {
     "id": "traffic-4",
     "category": "traffic",
     "question": "What is the punishment for drunk driving with alcohol in blood?",
-    "expected_sections": ["185"]
+    "expected_sections": [
+      "185"
+    ]
   },
   {
     "id": "traffic-5",
     "category": "traffic",
     "question": "Can I be fined for driving without a valid driving license?",
-    "expected_sections": ["3", "181"]
+    "expected_sections": [
+      "3",
+      "181"
+    ]
   },
   {
     "id": "traffic-6",
     "category": "traffic",
     "question": "What are the legal consequences of driving an uninsured vehicle without third party insurance?",
-    "expected_sections": ["146", "196"]
+    "expected_sections": [
+      "146",
+      "196"
+    ]
   },
   {
     "id": "traffic-7",
     "category": "traffic",
     "question": "What is the fine for jumping a red light or dangerous driving using mobile phone?",
-    "expected_sections": ["184"]
+    "expected_sections": [
+      "184"
+    ]
   },
   {
     "id": "traffic-8",
     "category": "traffic",
     "question": "What is the fine for driving without a valid Pollution Under Control PUC certificate?",
-    "expected_sections": ["190"]
+    "expected_sections": [
+      "190"
+    ]
   },
   {
     "id": "traffic-9",
     "category": "traffic",
     "question": "Can I show my driving licence and RC in DigiLocker or mParivahan to traffic police?",
-    "expected_sections": ["130", "139"]
+    "expected_sections": [
+      "130",
+      "139"
+    ]
   },
   {
     "id": "traffic-10",
     "category": "traffic",
     "question": "How can I contest an incorrect traffic challan in Virtual Court or Lok Adalat?",
-    "expected_sections": ["208"]
+    "expected_sections": [
+      "208"
+    ]
   },
   {
     "id": "consumer-1",
     "category": "consumer",
     "question": "Who is considered a consumer under the Consumer Protection Act 2019?",
-    "expected_sections": ["2(7)"]
+    "expected_sections": [
+      "2(7)"
+    ]
   },
   {
     "id": "consumer-2",
     "category": "consumer",
     "question": "What constitutes defective goods under consumer protection law?",
-    "expected_sections": ["2(10)"]
+    "expected_sections": [
+      "2(10)"
+    ]
   },
   {
     "id": "consumer-3",
     "category": "consumer",
     "question": "How does the Consumer Protection Act define deficiency in service?",
-    "expected_sections": ["2(11)"]
+    "expected_sections": [
+      "2(11)"
+    ]
   },
   {
     "id": "consumer-4",
     "category": "consumer",
     "question": "What is an unfair trade practice by an e-commerce seller?",
-    "expected_sections": ["2(47)"]
+    "expected_sections": [
+      "2(47)"
+    ]
   },
   {
     "id": "consumer-5",
     "category": "consumer",
     "question": "What is the financial jurisdiction of the District Consumer Commission?",
-    "expected_sections": ["34"]
+    "expected_sections": [
+      "34"
+    ]
   },
   {
     "id": "consumer-6",
     "category": "consumer",
     "question": "How can a consumer file a complaint in District Commission through e-daakhil?",
-    "expected_sections": ["35"]
+    "expected_sections": [
+      "35"
+    ]
   },
   {
     "id": "consumer-7",
     "category": "consumer",
     "question": "What is the timeline for the opposite party to respond after receiving a consumer complaint?",
-    "expected_sections": ["38"]
+    "expected_sections": [
+      "38"
+    ]
   },
   {
     "id": "consumer-8",
     "category": "consumer",
     "question": "What remedies or relief can the District Commission grant to a consumer for defective goods?",
-    "expected_sections": ["39"]
+    "expected_sections": [
+      "39"
+    ]
   },
   {
     "id": "consumer-9",
     "category": "consumer",
     "question": "What is the limitation period within which a consumer complaint must be filed?",
-    "expected_sections": ["69"]
+    "expected_sections": [
+      "69"
+    ]
   },
   {
     "id": "consumer-10",
     "category": "consumer",
     "question": "Can I claim refund and compensation if a company delivers damaged goods and refuses replacement?",
-    "expected_sections": ["39", "2(47)"]
+    "expected_sections": [
+      "39",
+      "2(47)"
+    ]
   },
   {
     "id": "criminal-1",
     "category": "criminal_procedure_and_rights",
     "question": "When can a police officer arrest a citizen without a warrant under BNSS?",
-    "expected_sections": ["35"]
+    "expected_sections": [
+      "35"
+    ]
   },
   {
     "id": "criminal-2",
     "category": "criminal_procedure_and_rights",
     "question": "What is a Notice of Appearance under Section 35(3) BNSS or 41A CrPC?",
-    "expected_sections": ["35"]
+    "expected_sections": [
+      "35"
+    ]
   },
   {
     "id": "criminal-3",
     "category": "criminal_procedure_and_rights",
     "question": "Is the police officer required to prepare an arrest memo with witness signature?",
-    "expected_sections": ["36"]
+    "expected_sections": [
+      "36"
+    ]
   },
   {
     "id": "criminal-4",
     "category": "criminal_procedure_and_rights",
     "question": "Can an arrested person meet an advocate of choice during police interrogation?",
-    "expected_sections": ["38"]
+    "expected_sections": [
+      "38"
+    ]
   },
   {
     "id": "criminal-5",
     "category": "criminal_procedure_and_rights",
     "question": "Can a woman be arrested after sunset and before sunrise by police?",
-    "expected_sections": ["43"]
+    "expected_sections": [
+      "43"
+    ]
   },
   {
     "id": "criminal-6",
     "category": "criminal_procedure_and_rights",
     "question": "Does an arrested person have the right to know the grounds of arrest and bail eligibility?",
-    "expected_sections": ["47"]
+    "expected_sections": [
+      "47"
+    ]
   },
   {
     "id": "criminal-7",
     "category": "criminal_procedure_and_rights",
     "question": "What is the mandatory 24-hour limit to produce an arrested person before a Magistrate?",
-    "expected_sections": ["57"]
+    "expected_sections": [
+      "57"
+    ]
   },
   {
     "id": "criminal-8",
     "category": "criminal_procedure_and_rights",
     "question": "What is a Zero FIR and can any police station refuse to register a cognizable crime?",
-    "expected_sections": ["173"]
+    "expected_sections": [
+      "173"
+    ]
   },
   {
     "id": "criminal-9",
     "category": "criminal_procedure_and_rights",
     "question": "Who is eligible for free legal aid under NALSA and what is the Tele-Law helpline number?",
-    "expected_sections": ["12", "14454"]
+    "expected_sections": [
+      "12",
+      "14454"
+    ]
   },
   {
     "id": "criminal-10",
     "category": "criminal_procedure_and_rights",
     "question": "Is a confession made to a police officer admissible as evidence in court under BSA?",
-    "expected_sections": ["22"]
+    "expected_sections": [
+      "22"
+    ]
+  },
+  {
+    "id": "hi-11",
+    "category": "traffic",
+    "question": "हेलमेट के बिना दोपहिया वाहन चलाने पर कितना जुर्माना है?",
+    "expected_sections": [
+      "194D"
+    ]
+  },
+  {
+    "id": "hi-12",
+    "category": "criminal_procedure_and_rights",
+    "question": "ज़ीरो एफआईआर क्या है और क्या कोई पुलिस स्टेशन इसे दर्ज करने से मना कर सकता है?",
+    "expected_sections": [
+      "173"
+    ]
+  },
+  {
+    "id": "hi-13",
+    "category": "traffic",
+    "question": "क्या कार के ड्राइवर और यात्रियों के लिए सीट बेल्ट अनिवार्य है?",
+    "expected_sections": [
+      "194B"
+    ]
+  },
+  {
+    "id": "ta-11",
+    "category": "traffic",
+    "question": "ஹெல்மெட் அணியாமல் இரு சக்கர வாகனத்தை ஓட்டுவதற்கான அபராதம் என்ன?",
+    "expected_sections": [
+      "194D"
+    ]
+  },
+  {
+    "id": "ta-12",
+    "category": "criminal_procedure_and_rights",
+    "question": "ஜீரோ எப்ஐஆர் என்றால் என்ன, எந்தக் காவல் நிலையமும் அதைப் பதிவு செய்ய மறுக்க முடியுமா?",
+    "expected_sections": [
+      "173"
+    ]
+  },
+  {
+    "id": "ta-13",
+    "category": "consumer",
+    "question": "e-Daakhil மூலம் மாவட்ட நுகர்வோர் ஆணையத்தில் புகார் செய்வது எப்படி?",
+    "expected_sections": [
+      "35"
+    ]
+  },
+  {
+    "id": "te-11",
+    "category": "traffic",
+    "question": "హెల్మెట్ లేకుండా బైక్ నడపడం వల్ల ఎంత జరిమానా?",
+    "expected_sections": [
+      "194D"
+    ]
+  },
+  {
+    "id": "te-12",
+    "category": "criminal_procedure_and_rights",
+    "question": "జిరో ఎఫ్ఐఆర్ అంటే ఏమిటి, ఏ పోలీస్ స్టేషనూ దానిని నమోదు చేయడానికి నిరాకరించవచ్చా?",
+    "expected_sections": [
+      "173"
+    ]
+  },
+  {
+    "id": "te-13",
+    "category": "criminal_procedure_and_rights",
+    "question": "సూర్యాస్తమయం తర్వాత మరియు సూర్యోదయానికి ముందు మహిళను అరెస్ట్ చేయవచ్చా?",
+    "expected_sections": [
+      "43"
+    ]
+  },
+  {
+    "id": "te-14",
+    "category": "traffic",
+    "question": "DigiLocker లేదా mParivahanలో డ్రైవింగ్ లైసెన్స్ చూపించవచ్చా?",
+    "expected_sections": [
+      "130"
+    ]
+  },
+  {
+    "id": "bn-11",
+    "category": "traffic",
+    "question": "হেলমেট ছাড়া বাইক চালালে কী জরিমানা?",
+    "expected_sections": [
+      "194D"
+    ]
+  },
+  {
+    "id": "bn-12",
+    "category": "criminal_procedure_and_rights",
+    "question": "জিরো এফআইআর কী এবং যেকোনো থানা কি তা নিবন্ধন করতে অস্বীকার করতে পারে?",
+    "expected_sections": [
+      "173"
+    ]
   }
 ]

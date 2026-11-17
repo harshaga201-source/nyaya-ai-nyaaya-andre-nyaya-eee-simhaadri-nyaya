@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef } from 'react';
+import React, { useState, useContext, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,9 @@ import {
   Platform,
 } from 'react-native';
 import { Audio } from 'expo-av';
-import { Colors } from '../../constants/Colors';
-import { TRANSLATIONS } from '../../constants/Translations';
+import { Colors, BORDER, BORDER_THIN } from '../../constants/Colors';
+import { getUI } from '../../constants/Translations';
+import { localizeApiError } from '../../constants/ApiErrors';
 import { LanguageContext } from '../_layout';
 import { Header } from '../../components/Header';
 import { CitationChips } from '../../components/CitationChip';
@@ -22,7 +23,7 @@ import { transcribeAudio, sendChatMessage, ChatResponseData } from '../../servic
 
 export default function VoiceScreen() {
   const { language, setLanguage } = useContext(LanguageContext);
-  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+  const t = getUI(language);
 
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -38,42 +39,61 @@ export default function VoiceScreen() {
   
   // Web MediaRecorder & SpeechRecognition references
   const webMediaRecorderRef = useRef<any>(null);
+  const webStreamRef = useRef<any>(null);
   const webAudioChunksRef = useRef<Blob[]>([]);
   const webRecognitionRef = useRef<any>(null);
+  const captureModeRef = useRef<'recognition' | 'recorder' | null>(null);
 
   const [loadingAnswer, setLoadingAnswer] = useState(false);
   const [answerData, setAnswerData] = useState<ChatResponseData | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  // Fallback voice recognition helper for restricted webviews or environments without mic hardware
-  const fallbackSimulatedVoice = () => {
-    setIsRecording(true);
-    setStatusMessage('🎙️ Voice Search Active: Listening to your speech...');
-    
-    const defaultPool = [
-      'What are my legal rights if police stop my vehicle or ask for documents?',
-      'Can police arrest without warrant under Bharatiya Nagarik Suraksha Sanhita?',
-      'What is Zero FIR and where can I file it?',
-      'What is the penalty for driving without a helmet under Motor Vehicles Act?',
-      'Can a store refuse refund for a defective product under Consumer Protection Act?'
-    ];
-    const pickedQuery = transcriptRef.current.trim() || defaultPool[Math.floor(Math.random() * defaultPool.length)];
+  // Stop any active web capture when leaving the screen.
+  useEffect(() => {
+    return () => {
+      try {
+        webRecognitionRef.current?.stop?.();
+      } catch (e) {}
+      webRecognitionRef.current = null;
 
-    setTimeout(() => {
-      updateTranscript(pickedQuery);
-      setStatusMessage('Voice query captured! Consulting Bharatiya statutes...');
-      setIsRecording(false);
-      handleSendQuery(pickedQuery);
-    }, 1500);
+      try {
+        if (webMediaRecorderRef.current && webMediaRecorderRef.current.state !== 'inactive') {
+          webMediaRecorderRef.current.stop();
+        }
+      } catch (e) {}
+      webMediaRecorderRef.current = null;
+
+      try {
+        webStreamRef.current?.getTracks().forEach((track: any) => track.stop());
+      } catch (e) {}
+      webStreamRef.current = null;
+
+      stopLegalSpeech();
+    };
+  }, []);
+
+  const setSpeechError = (code?: string) => {
+    const messages: Record<string, string> = {
+      'not-allowed': t.stPermissionDenied,
+      'service-not-allowed': t.stServiceNotAllowed,
+      'no-speech': t.stNoSpeech,
+      'audio-capture': t.stAudioCapture,
+      network: t.stNetwork,
+      aborted: t.stAborted,
+    };
+    setStatusMessage(messages[code || ''] || t.stVoiceIncomplete);
   };
 
   // Start Recording
   const startRecording = async () => {
+    if (isRecording) return;
     setStatusMessage(null);
     setAnswerData(null);
-    
+
     if (Platform.OS === 'web') {
+      // Preferred path: the browser's own speech recognizer gives real speech-to-text
+      // without needing a Gemini key. It fills the review box and never auto-sends.
       const SpeechRecognition =
         typeof window !== 'undefined' &&
         ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
@@ -84,13 +104,11 @@ export default function VoiceScreen() {
           recognition.lang = getSpeechLanguageCode(language);
           recognition.interimResults = true;
           recognition.continuous = false;
-
-          let speechCaptured = false;
-          let isFallingBack = false;
+          let errored = false;
 
           recognition.onstart = () => {
             setIsRecording(true);
-            setStatusMessage('🎙️ Listening... Speak your legal query now.');
+            setStatusMessage(t.stListening);
           };
 
           recognition.onresult = (event: any) => {
@@ -99,40 +117,91 @@ export default function VoiceScreen() {
               combined += event.results[i][0].transcript;
             }
             if (combined.trim()) {
-              speechCaptured = true;
-              updateTranscript(combined);
-              setStatusMessage(`🎙️ Hearing: "${combined}"`);
+              updateTranscript(combined.trim());
+              setStatusMessage(t.stHearingPrefix + combined.trim());
             }
           };
 
           recognition.onerror = (event: any) => {
-            console.log('Web speech notice, activating robust voice fallback:', event.error);
-            if (!speechCaptured) {
-              isFallingBack = true;
-              fallbackSimulatedVoice();
-            }
+            console.log('Web speech error:', event.error);
+            errored = true;
+            captureModeRef.current = null;
+            setIsRecording(false);
+            setSpeechError(event.error);
           };
 
           recognition.onend = () => {
-            if (isFallingBack) return;
+            captureModeRef.current = null;
             setIsRecording(false);
-            const queryToRun = transcriptRef.current.trim();
-            if (speechCaptured && queryToRun) {
-              setStatusMessage('Speech recognized! Querying legal knowledge base...');
-              handleSendQuery(queryToRun);
+            webRecognitionRef.current = null;
+            if (errored) return;
+            if (transcriptRef.current.trim()) {
+              setStatusMessage(t.stCaptured);
+            } else {
+              setStatusMessage(t.stNoSpeechDetected);
             }
           };
 
           recognition.start();
           webRecognitionRef.current = recognition;
+          captureModeRef.current = 'recognition';
           return;
         } catch (e) {
-          console.warn('SpeechRecognition failed, switching to auto-voice fallback', e);
+          console.warn('SpeechRecognition could not start:', e);
+          setStatusMessage(t.stRecStartFail);
+          return;
         }
       }
 
-      // If SpeechRecognition not available in this browser environment:
-      fallbackSimulatedVoice();
+      // Secondary path: record audio and send it to the backend /transcribe endpoint.
+      try {
+        if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+          setStatusMessage(t.stUnsupported);
+          return;
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        webStreamRef.current = stream;
+        const recorder = new MediaRecorder(stream);
+        webAudioChunksRef.current = [];
+
+        recorder.ondataavailable = (event: any) => {
+          if (event.data && event.data.size > 0) {
+            webAudioChunksRef.current.push(event.data);
+          }
+        };
+
+        recorder.onstop = async () => {
+          const chunks = webAudioChunksRef.current;
+          webAudioChunksRef.current = [];
+          const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+
+          try {
+            webStreamRef.current?.getTracks().forEach((track: any) => track.stop());
+          } catch (e) {}
+          webStreamRef.current = null;
+          webMediaRecorderRef.current = null;
+          captureModeRef.current = null;
+          setIsRecording(false);
+
+          if (blob.size > 0) {
+            await handleAudioTranscription(blob);
+          } else {
+            setStatusMessage(t.stNoAudio);
+          }
+        };
+
+        recorder.start();
+        webMediaRecorderRef.current = recorder;
+        captureModeRef.current = 'recorder';
+        setIsRecording(true);
+        setStatusMessage(t.stRecording);
+      } catch (err: any) {
+        console.warn('Microphone/MediaRecorder failed:', err);
+        setStatusMessage(
+          err?.name === 'NotAllowedError' ? t.stPermissionDenied : t.stMicStartFail
+        );
+      }
       return;
     }
 
@@ -140,7 +209,7 @@ export default function VoiceScreen() {
     try {
       const permission = await Audio.requestPermissionsAsync();
       if (!permission.granted) {
-        setStatusMessage('Microphone permission required to record speech.');
+        setStatusMessage(t.stMicPermMobile);
         return;
       }
 
@@ -154,33 +223,40 @@ export default function VoiceScreen() {
       );
       setRecording(newRecording);
       setIsRecording(true);
-      setStatusMessage('Listening... speak your legal question.');
+      setStatusMessage(t.stListeningNative);
     } catch (err: any) {
-      setStatusMessage('Error accessing microphone on device.');
+      console.warn('Native microphone error:', err);
+      setStatusMessage(t.stMicErrorNative);
     }
   };
 
   // Stop Recording
   const stopRecording = async () => {
-    setIsRecording(false);
-
     if (Platform.OS === 'web') {
-      if (webRecognitionRef.current) {
+      if (captureModeRef.current === 'recognition' && webRecognitionRef.current) {
         try {
           webRecognitionRef.current.stop();
-        } catch (e) {}
-        webRecognitionRef.current = null;
+        } catch (e) {
+          setIsRecording(false);
+        }
+        return;
       }
+
       if (webMediaRecorderRef.current && webMediaRecorderRef.current.state !== 'inactive') {
-        webMediaRecorderRef.current.stop();
+        try {
+          webMediaRecorderRef.current.stop();
+        } catch (e) {
+          setIsRecording(false);
+          setStatusMessage(t.stStopFail);
+        }
+        return;
       }
-      const q = transcriptRef.current.trim();
-      if (q) {
-        handleSendQuery(q);
-      }
+
+      setIsRecording(false);
       return;
     }
 
+    setIsRecording(false);
     if (!recording) return;
 
     try {
@@ -191,21 +267,29 @@ export default function VoiceScreen() {
         await handleAudioTranscription(uri);
       }
     } catch (err: any) {
-      setStatusMessage('Error finalizing audio recording.');
+      console.warn('Finalizing recording failed:', err);
+      setRecording(null);
+      setStatusMessage(t.stFinalizeFail);
     }
   };
 
   const handleAudioTranscription = async (audioData: any) => {
     setTranscribing(true);
-    setStatusMessage('Transcribing speech with Gemini AI...');
+    setStatusMessage(t.transcribing);
     try {
-      const text = await transcribeAudio(audioData, language);
-      updateTranscript(text);
-      setStatusMessage('Speech recognized! Review or edit text below before submitting.');
+      const text = (await transcribeAudio(audioData, language)) || '';
+      const cleaned = text.trim();
+      if (cleaned) {
+        updateTranscript(cleaned);
+        setStatusMessage(t.stTranscribed);
+      } else {
+        updateTranscript('');
+        setStatusMessage(t.stTranscribeFail);
+      }
     } catch (e: any) {
-      const defaultQ = 'What are my legal rights if police stop my vehicle or ask for documents?';
-      updateTranscript(defaultQ);
-      setStatusMessage('Speech ready for editing below.');
+      console.warn('Transcription failed:', e);
+      updateTranscript('');
+      setStatusMessage(t.stTranscriptionError);
     } finally {
       setTranscribing(false);
     }
@@ -213,35 +297,45 @@ export default function VoiceScreen() {
 
   const handleSendQuery = async (queryOverride?: string) => {
     const raw = typeof queryOverride === 'string' ? queryOverride : transcriptRef.current;
-    const q = raw.trim() || 'What are my legal rights if police stop my vehicle or ask for documents?';
+    const q = (raw || '').trim();
+    if (!q) {
+      setStatusMessage(t.stEmptyQuery);
+      return;
+    }
     if (loadingAnswer) return;
 
     updateTranscript(q);
     setLoadingAnswer(true);
-    setStatusMessage('Consulting statutory legal knowledge base...');
+    setStatusMessage(t.stConsulting);
     try {
       const res = await sendChatMessage({
         message: q,
         language: language,
         session_id: 'voice-session',
       });
+
+      const answer = typeof res?.answer === 'string' ? res.answer : '';
+      if (!answer.trim()) {
+        throw new Error(t.stEmptyAnswer);
+      }
+
       setAnswerData(res);
       setStatusMessage(null);
 
       // Auto speak answer in the selected language
       setIsSpeaking(true);
-      speakLegalText(res.answer, language, () => {
+      speakLegalText(answer, language, () => {
         setIsSpeaking(false);
       });
     } catch (err: any) {
-      setStatusMessage(`Error: ${err.message || 'Unable to retrieve answer.'}`);
+      setStatusMessage(`${t.errorTitle}: ${localizeApiError(err.message, language) || t.stRetrieveFail}`);
     } finally {
       setLoadingAnswer(false);
     }
   };
 
   const toggleSpeech = () => {
-    if (!answerData) return;
+    if (!answerData?.answer) return;
     if (isSpeaking) {
       stopLegalSpeech();
       setIsSpeaking(false);
@@ -260,10 +354,8 @@ export default function VoiceScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Voice Control Card */}
         <View style={styles.voiceCard}>
-          <Text style={styles.cardHeading}>🎙️ Voice Legal Query</Text>
-          <Text style={styles.cardSub}>
-            Speak in your language. NyayaSathi transcribes your query, allows you to review it, and reads statutory answers aloud.
-          </Text>
+          <Text style={styles.cardHeading}>{t.voiceTitle}</Text>
+          <Text style={styles.cardSub}>{t.voiceDesc}</Text>
 
           {/* Animated Mic Button */}
           <View style={styles.micWrapper}>
@@ -278,7 +370,7 @@ export default function VoiceScreen() {
               <Text style={styles.micEmoji}>{isRecording ? '⏹️' : '🎙️'}</Text>
             </TouchableOpacity>
             <Text style={styles.micInstruction}>
-              {isRecording ? 'Tap to Stop Recording' : 'Tap to Start Speaking'}
+              {isRecording ? t.tapToStop : t.tapToSpeak}
             </Text>
           </View>
 
@@ -291,19 +383,19 @@ export default function VoiceScreen() {
           {transcribing && (
             <View style={styles.loadingRow}>
               <ActivityIndicator color={Colors.gold} size="small" />
-              <Text style={styles.loadingLabel}>Transcribing with Gemini...</Text>
+              <Text style={styles.loadingLabel}>{t.transcribing}</Text>
             </View>
           )}
 
           {/* Editable Transcript Box */}
           <View style={styles.editSection}>
-            <Text style={styles.editLabel}>Review & Edit Recognized Text:</Text>
+            <Text style={styles.editLabel}>{t.reviewLabel}</Text>
             <TextInput
               style={styles.transcriptInput}
               value={transcript}
               onChangeText={updateTranscript}
-              placeholder="Spoken words will appear here. You can also type or edit directly..."
-              placeholderTextColor="#94A3B8"
+              placeholder={t.transcriptPlaceholder}
+              placeholderTextColor="#6B6963"
               multiline
               onKeyPress={(e: any) => {
                 if (Platform.OS === 'web' && e.nativeEvent?.key === 'Enter' && !e.nativeEvent?.shiftKey) {
@@ -316,7 +408,7 @@ export default function VoiceScreen() {
             {/* Quick Test Voice Grid */}
             <View style={{ marginVertical: 10 }}>
               <Text style={{ fontSize: 13, fontWeight: '800', color: Colors.navy, marginBottom: 8 }}>
-                ⚡ Instant Voice Queries (Tap to speak & search):
+                {t.quickVoiceHeading}
               </Text>
               <View style={styles.sampleVoiceGrid}>
                 <TouchableOpacity
@@ -325,8 +417,8 @@ export default function VoiceScreen() {
                 >
                   <Text style={styles.sampleVoiceCardIcon}>🚔</Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.sampleVoiceCardTitle}>Arrest without warrant</Text>
-                    <Text style={styles.sampleVoiceCardSub}>Section 35 BNSS safeguards</Text>
+                    <Text style={styles.sampleVoiceCardTitle}>{t.cardArrestTitle}</Text>
+                    <Text style={styles.sampleVoiceCardSub}>{t.cardArrestSub}</Text>
                   </View>
                 </TouchableOpacity>
 
@@ -336,8 +428,8 @@ export default function VoiceScreen() {
                 >
                   <Text style={styles.sampleVoiceCardIcon}>📋</Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.sampleVoiceCardTitle}>What is Zero FIR?</Text>
-                    <Text style={styles.sampleVoiceCardSub}>Section 173 BNSS (CrPC S.154)</Text>
+                    <Text style={styles.sampleVoiceCardTitle}>{t.cardFirTitle}</Text>
+                    <Text style={styles.sampleVoiceCardSub}>{t.cardFirSub}</Text>
                   </View>
                 </TouchableOpacity>
 
@@ -347,8 +439,8 @@ export default function VoiceScreen() {
                 >
                   <Text style={styles.sampleVoiceCardIcon}>🪖</Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.sampleVoiceCardTitle}>Helmet Violation Fine</Text>
-                    <Text style={styles.sampleVoiceCardSub}>MVA Section 194D penalty</Text>
+                    <Text style={styles.sampleVoiceCardTitle}>{t.cardHelmetTitle}</Text>
+                    <Text style={styles.sampleVoiceCardSub}>{t.cardHelmetSub}</Text>
                   </View>
                 </TouchableOpacity>
 
@@ -358,8 +450,8 @@ export default function VoiceScreen() {
                 >
                   <Text style={styles.sampleVoiceCardIcon}>🛍️</Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.sampleVoiceCardTitle}>Defective Product Refund</Text>
-                    <Text style={styles.sampleVoiceCardSub}>Consumer Protection Act 2019</Text>
+                    <Text style={styles.sampleVoiceCardTitle}>{t.cardRefundTitle}</Text>
+                    <Text style={styles.sampleVoiceCardSub}>{t.cardRefundSub}</Text>
                   </View>
                 </TouchableOpacity>
               </View>
@@ -376,7 +468,7 @@ export default function VoiceScreen() {
               {loadingAnswer ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={styles.sendBtnText}>🔍 Search & Read Aloud →</Text>
+                <Text style={styles.sendBtnText}>{t.searchRead}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -386,15 +478,15 @@ export default function VoiceScreen() {
         {answerData && (
           <View style={styles.answerCard}>
             {answerData.emergency && (
-              <EmergencyBanner emergency={answerData.emergency} />
+              <EmergencyBanner emergency={answerData.emergency} language={language} />
             )}
 
             {answerData.is_cached && (
-              <CacheBadge cacheType={answerData.cache_type} />
+              <CacheBadge cacheType={answerData.cache_type} language={language} />
             )}
 
             <View style={styles.answerHeader}>
-              <Text style={styles.answerTitle}>⚖️ Statutory Answer</Text>
+              <Text style={styles.answerTitle}>{t.statutoryAnswer}</Text>
               <TouchableOpacity
                 style={[styles.ttsControl, isSpeaking && styles.ttsActive]}
                 onPress={toggleSpeech}
@@ -409,7 +501,7 @@ export default function VoiceScreen() {
             <Text style={styles.answerBody}>{answerData.answer}</Text>
 
             {answerData.citations && answerData.citations.length > 0 && (
-              <CitationChips citations={answerData.citations} />
+              <CitationChips citations={answerData.citations} language={language} />
             )}
 
             <View style={styles.disclaimerRow}>
@@ -417,7 +509,7 @@ export default function VoiceScreen() {
                 ⚠️ {answerData.disclaimer || t.disclaimer}
               </Text>
               <Text style={styles.latency}>
-                Latency: {answerData.response_time_ms} ms
+                {t.latencyLabel} {answerData.response_time_ms} ms
               </Text>
             </View>
           </View>
@@ -440,26 +532,29 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   voiceCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    backgroundColor: '#FFFDF7',
+    borderRadius: 0,
     padding: 20,
     borderColor: Colors.cardBorder,
-    borderWidth: 1,
+    borderWidth: 2,
     marginBottom: 16,
     ...Platform.select({
-      web: { boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)' },
-      default: { elevation: 2 },
+      web: { boxShadow: '5px 5px 0 #111111' },
+      default: { elevation: 4 },
     }),
   },
   cardHeading: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: Colors.navy,
+    fontSize: 21,
+    fontWeight: '900',
+    color: Colors.ink,
     marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   cardSub: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: Colors.mutedInk,
+    fontWeight: '600',
     lineHeight: 18,
     marginBottom: 16,
   },
@@ -468,46 +563,55 @@ const styles = StyleSheet.create({
     marginVertical: 14,
   },
   micButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.gold,
+    width: 100,
+    height: 100,
+    borderRadius: 0,
+    backgroundColor: Colors.yellow,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#B48C1B',
+    borderWidth: BORDER,
+    borderColor: Colors.pitchBlack,
     ...Platform.select({
       web: {
-        boxShadow: '0 4px 16px rgba(201, 162, 39, 0.4)',
+        boxShadow: '7px 7px 0 #111111',
         cursor: 'pointer',
       },
-      default: { elevation: 5 },
+      default: { elevation: 6 },
     }),
   },
   micButtonRecording: {
-    backgroundColor: '#DC2626',
-    borderColor: '#991B1B',
+    backgroundColor: '#FF3B00',
+    borderColor: Colors.pitchBlack,
   },
   micEmoji: {
     fontSize: 34,
   },
   micInstruction: {
     fontSize: 13,
-    fontWeight: '700',
-    color: Colors.navy,
-    marginTop: 10,
+    fontWeight: '900',
+    color: Colors.ink,
+    marginTop: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    borderBottomWidth: BORDER_THIN,
+    borderBottomColor: Colors.pitchBlack,
+    paddingBottom: 4,
   },
   statusBox: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: 8,
-    padding: 8,
-    marginVertical: 6,
+    backgroundColor: Colors.yellow,
+    borderRadius: 0,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginVertical: 8,
     alignItems: 'center',
+    alignSelf: 'stretch',
+    borderWidth: BORDER_THIN,
+    borderColor: Colors.pitchBlack,
   },
   statusText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    fontWeight: '600',
+    fontSize: 13,
+    color: Colors.ink,
+    fontWeight: '800',
   },
   loadingRow: {
     flexDirection: 'row',
@@ -526,18 +630,21 @@ const styles = StyleSheet.create({
   },
   editLabel: {
     fontSize: 12,
-    fontWeight: '700',
-    color: Colors.textSecondary,
+    fontWeight: '900',
+    color: Colors.ink,
     marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   transcriptInput: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
-    borderWidth: 1,
-    borderRadius: 12,
+    backgroundColor: '#FFFDF7',
+    borderColor: Colors.pitchBlack,
+    borderWidth: BORDER_THIN,
+    borderRadius: 0,
     padding: 12,
-    fontSize: 14,
-    color: Colors.textPrimary,
+    fontSize: 14.5,
+    fontWeight: '600',
+    color: Colors.ink,
     minHeight: 80,
     textAlignVertical: 'top',
   },
@@ -549,17 +656,17 @@ const styles = StyleSheet.create({
   sampleVoiceCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
-    borderWidth: 1,
-    borderRadius: 12,
+    backgroundColor: '#FFFDF7',
+    borderColor: Colors.pitchBlack,
+    borderWidth: BORDER_THIN,
+    borderRadius: 0,
     padding: 10,
     width: Platform.OS === 'web' ? '48%' : '100%',
     minWidth: 260,
     flexGrow: 1,
     ...Platform.select({
-      web: { cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' },
-      default: { elevation: 1 },
+      web: { cursor: 'pointer', boxShadow: '3px 3px 0 #111111' },
+      default: { elevation: 2 },
     }),
   },
   sampleVoiceCardIcon: {
@@ -567,46 +674,52 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   sampleVoiceCardTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.navy,
+    fontSize: 13.5,
+    fontWeight: '900',
+    color: Colors.ink,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   sampleVoiceCardSub: {
     fontSize: 11,
-    color: Colors.textSecondary,
-    marginTop: 1,
+    color: Colors.mutedInk,
+    fontWeight: '600',
+    marginTop: 2,
   },
   sendBtn: {
-    backgroundColor: Colors.navy,
-    borderRadius: 12,
-    paddingVertical: 12,
+    backgroundColor: Colors.pitchBlack,
+    borderRadius: 0,
+    paddingVertical: 15,
     alignItems: 'center',
     marginTop: 12,
-    borderWidth: 1,
-    borderColor: Colors.gold,
+    borderWidth: BORDER,
+    borderColor: Colors.pitchBlack,
     ...Platform.select({
-      web: { cursor: 'pointer' },
+      web: { cursor: 'pointer', boxShadow: '5px 5px 0 #111111' },
+      default: { elevation: 4 },
     }),
   },
   sendBtnDisabled: {
-    backgroundColor: '#94A3B8',
-    borderColor: '#94A3B8',
+    backgroundColor: '#A9A79F',
+    borderColor: '#A9A79F',
     opacity: 0.6,
   },
   sendBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 14,
+    color: Colors.yellow,
+    fontWeight: '900',
+    fontSize: 15,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   answerCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    backgroundColor: '#FFFDF7',
+    borderRadius: 0,
     padding: 18,
-    borderColor: Colors.gold,
-    borderWidth: 1.5,
+    borderColor: Colors.pitchBlack,
+    borderWidth: BORDER,
     ...Platform.select({
-      web: { boxShadow: '0 4px 14px rgba(11, 31, 58, 0.08)' },
-      default: { elevation: 3 },
+      web: { boxShadow: '8px 8px 0 #111111' },
+      default: { elevation: 4 },
     }),
   },
   answerHeader: {
@@ -615,19 +728,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: '#ECE7DC',
     paddingBottom: 8,
   },
   answerTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: Colors.navy,
+    fontSize: 17,
+    fontWeight: '900',
+    color: Colors.ink,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   ttsControl: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
+    backgroundColor: '#ECE7DC',
+    borderRadius: 0,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
@@ -645,7 +760,8 @@ const styles = StyleSheet.create({
   },
   answerBody: {
     fontSize: 14.5,
-    color: Colors.textPrimary,
+    fontWeight: '600',
+    color: Colors.ink,
     lineHeight: 22,
     marginBottom: 10,
   },
@@ -655,7 +771,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: '#ECE7DC',
     paddingTop: 8,
   },
   disclaimerText: {

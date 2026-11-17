@@ -11,7 +11,8 @@ import {
   Alert,
 } from 'react-native';
 import { Colors } from '../../constants/Colors';
-import { TRANSLATIONS } from '../../constants/Translations';
+import { getUI } from '../../constants/Translations';
+import { localizeApiError } from '../../constants/ApiErrors';
 import { LanguageContext } from '../_layout';
 import { Header } from '../../components/Header';
 import { GavelIcon } from '../../constants/Illustrations';
@@ -19,14 +20,14 @@ import { disputeTrafficFine, TrafficDisputeData } from '../../services/api';
 
 export default function TrafficDisputeScreen() {
   const { language, setLanguage } = useContext(LanguageContext);
-  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+  const t = getUI(language);
 
   // Wizard Form Fields
   const [challanNumber, setChallanNumber] = useState('');
   const [date, setDate] = useState('');
   const [place, setPlace] = useState('');
-  const [vehicleType, setVehicleType] = useState('Two-Wheeler (Motorcycle/Scooter)');
-  const [violationCharged, setViolationCharged] = useState('Driving without helmet');
+  const [vehicleType, setVehicleType] = useState(() => t.trVehicleDefault);
+  const [violationCharged, setViolationCharged] = useState(() => t.trViolationDefault);
   const [sectionCharged, setSectionCharged] = useState('Section 194D');
   const [fineAmount, setFineAmount] = useState('');
   const [disputeReason, setDisputeReason] = useState('wrong_vehicle');
@@ -38,18 +39,18 @@ export default function TrafficDisputeScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const disputeReasons = [
-    { id: 'wrong_vehicle', label: 'Wrong Vehicle / Registration Error' },
-    { id: 'valid_documents', label: 'Valid Documents in DigiLocker/mParivahan' },
-    { id: 'signal_camera_fault', label: 'Camera / Sensor Glitch / Yellow Light' },
-    { id: 'wrong_section', label: 'Wrong Statutory Section Charged' },
-    { id: 'already_paid', label: 'Challan Already Paid / Duplicate' },
-    { id: 'wrong_amount', label: 'Discrepancy in Fine Amount' },
-    { id: 'other', label: 'Other Factual Grounds' },
+    { id: 'wrong_vehicle', label: t.trReason1 },
+    { id: 'valid_documents', label: t.trReason2 },
+    { id: 'signal_camera_fault', label: t.trReason3 },
+    { id: 'wrong_section', label: t.trReason4 },
+    { id: 'already_paid', label: t.trReason5 },
+    { id: 'wrong_amount', label: t.trReason6 },
+    { id: 'other', label: t.trReason7 },
   ];
 
   const handleSubmit = async () => {
     if (!challanNumber.trim()) {
-      Alert.alert('Required Field', 'Please enter your Challan Number or Notice ID.');
+      Alert.alert(t.requiredTitle, t.trRequiredMsg);
       return;
     }
 
@@ -72,7 +73,7 @@ export default function TrafficDisputeScreen() {
       });
       setResult(data);
     } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to analyze traffic challan.');
+      setErrorMessage(localizeApiError(err.message, language) || t.trFail);
     } finally {
       setLoading(false);
     }
@@ -84,7 +85,7 @@ export default function TrafficDisputeScreen() {
       setCopiedKey(key);
       setTimeout(() => setCopiedKey(null), 3000);
     } else {
-      Alert.alert('Contest Letter Copied', 'The letter text has been copied to your clipboard.');
+      Alert.alert(t.trCopiedTitle, t.trCopiedMsg);
       setCopiedKey(key);
       setTimeout(() => setCopiedKey(null), 3000);
     }
@@ -106,10 +107,10 @@ export default function TrafficDisputeScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.inputLabel}>Challan Number / Notice Reference *</Text>
+            <Text style={styles.inputLabel}>{t.trChallanLabel}</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. DL12345678901234"
+              placeholder={t.trChallanPh}
               value={challanNumber}
               onChangeText={setChallanNumber}
             />
@@ -117,19 +118,19 @@ export default function TrafficDisputeScreen() {
 
           <View style={styles.row}>
             <View style={[styles.formGroup, { flex: 1 }]}>
-              <Text style={styles.inputLabel}>Date of Alleged Violation</Text>
+              <Text style={styles.inputLabel}>{t.trDateLabel}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="DD/MM/YYYY"
+                placeholder={t.cpDatePh}
                 value={date}
                 onChangeText={setDate}
               />
             </View>
             <View style={[styles.formGroup, { flex: 1 }]}>
-              <Text style={styles.inputLabel}>Location / Place</Text>
+              <Text style={styles.inputLabel}>{t.trPlaceLabel}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. MG Road Junction"
+                placeholder={t.trPlacePh}
                 value={place}
                 onChangeText={setPlace}
               />
@@ -137,10 +138,10 @@ export default function TrafficDisputeScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.inputLabel}>Vehicle Type</Text>
+            <Text style={styles.inputLabel}>{t.trVehicleLabel}</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. Two-Wheeler / Car / Commercial"
+              placeholder={t.trVehiclePh}
               value={vehicleType}
               onChangeText={setVehicleType}
             />
@@ -148,19 +149,19 @@ export default function TrafficDisputeScreen() {
 
           <View style={styles.row}>
             <View style={[styles.formGroup, { flex: 1.2 }]}>
-              <Text style={styles.inputLabel}>Alleged Violation</Text>
+              <Text style={styles.inputLabel}>{t.trViolationLabel}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. Exceeding speed limit"
+                placeholder={t.trViolationPh}
                 value={violationCharged}
                 onChangeText={setViolationCharged}
               />
             </View>
             <View style={[styles.formGroup, { flex: 0.8 }]}>
-              <Text style={styles.inputLabel}>Section Charged</Text>
+              <Text style={styles.inputLabel}>{t.trSectionLabel}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. Section 183"
+                placeholder={t.trSectionPh}
                 value={sectionCharged}
                 onChangeText={setSectionCharged}
               />
@@ -168,7 +169,7 @@ export default function TrafficDisputeScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.inputLabel}>Reason for Contestation</Text>
+            <Text style={styles.inputLabel}>{t.trReasonLabel}</Text>
             <View style={styles.radioGrid}>
               {disputeReasons.map((r) => {
                 const selected = disputeReason === r.id;
@@ -188,10 +189,10 @@ export default function TrafficDisputeScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.inputLabel}>Custom Facts & Explanations (Optional)</Text>
+            <Text style={styles.inputLabel}>{t.trCustomLabel}</Text>
             <TextInput
               style={[styles.input, { minHeight: 65 }]}
-              placeholder="Describe what occurred (e.g. camera took photo of another car, or PUC was valid in DigiLocker)..."
+              placeholder={t.trCustomPh}
               value={customExplanation}
               onChangeText={setCustomExplanation}
               multiline
@@ -206,7 +207,7 @@ export default function TrafficDisputeScreen() {
             {loading ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.submitBtnText}>Evaluate Dispute & Generate Letter →</Text>
+              <Text style={styles.submitBtnText}>{t.trSubmit}</Text>
             )}
           </TouchableOpacity>
 
@@ -228,14 +229,14 @@ export default function TrafficDisputeScreen() {
               ]}
             >
               <Text style={styles.analysisTitle}>
-                {result.section_matches ? '✅ Statutory Provision Matched' : '⚠️ Section Discrepancy Found'}
+                {result.section_matches ? t.trMatched : t.trDiscrepancy}
               </Text>
               <Text style={styles.analysisDesc}>{result.section_analysis}</Text>
             </View>
 
             {/* Legal Options */}
             <View style={styles.sectionWrap}>
-              <Text style={styles.wrapHeading}>⚖️ Citizen Options to Contest</Text>
+              <Text style={styles.wrapHeading}>{t.trOptions}</Text>
               <View style={styles.optionsGrid}>
                 {result.options.map((opt, i) => (
                   <View key={i} style={styles.optionCard}>
@@ -249,13 +250,13 @@ export default function TrafficDisputeScreen() {
             {/* Bilingual Draft Contest Letter */}
             <View style={styles.sectionWrap}>
               <View style={styles.letterHeader}>
-                <Text style={styles.wrapHeading}>📝 Ready-to-Submit Contest Letter</Text>
+                <Text style={styles.wrapHeading}>{t.trLetter}</Text>
                 <TouchableOpacity
                   style={styles.copyBtn}
                   onPress={() => copyToClipboard(result.draft_contest_letter_english, 'eng')}
                 >
                   <Text style={styles.copyBtnText}>
-                    {copiedKey === 'eng' ? '✓ Copied English' : '📋 Copy English'}
+                    {copiedKey === 'eng' ? t.trCopiedEng : t.trCopyEng}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -269,14 +270,14 @@ export default function TrafficDisputeScreen() {
                 <>
                   <View style={[styles.letterHeader, { marginTop: 12 }]}>
                     <Text style={styles.wrapHeading}>
-                      🌐 Translated Letter ({t.appName})
+                      {t.trTranslatedLetter} ({t.appName})
                     </Text>
                     <TouchableOpacity
                       style={styles.copyBtn}
                       onPress={() => copyToClipboard(result.draft_contest_letter_target_lang, 'target')}
                     >
                       <Text style={styles.copyBtnText}>
-                        {copiedKey === 'target' ? '✓ Copied' : '📋 Copy Translated'}
+                        {copiedKey === 'target' ? t.trCopied : t.trCopyTranslated}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -291,19 +292,19 @@ export default function TrafficDisputeScreen() {
 
             {/* Submission Steps */}
             <View style={styles.sectionWrap}>
-              <Text style={styles.wrapHeading}>🚀 Steps to Submit on Official Portal</Text>
+              <Text style={styles.wrapHeading}>{t.trSteps}</Text>
               {result.submission_steps.map((step, idx) => (
                 <Text key={idx} style={styles.stepText}>{step}</Text>
               ))}
               <View style={styles.portalBox}>
                 <Text style={styles.portalNote}>
-                  Official Government Portal: {result.official_portal_url} (NyayaSathi will NEVER submit to or access government portals on your behalf).
+                  {t.trPortalNote}{result.official_portal_url}{t.trPortalNoteEnd}
                 </Text>
               </View>
             </View>
 
             <View style={styles.disclaimerFoot}>
-              <Text style={styles.disclaimerText}>⚖️ {result.disclaimer}</Text>
+              <Text style={styles.disclaimerText}>⚖️ {result.disclaimer || t.disclaimer}</Text>
             </View>
           </View>
         )}
@@ -325,15 +326,15 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    backgroundColor: '#FFFDF7',
+    borderRadius: 0,
     padding: 20,
     borderColor: Colors.cardBorder,
-    borderWidth: 1,
+    borderWidth: 2,
     marginBottom: 16,
     ...Platform.select({
-      web: { boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)' },
-      default: { elevation: 2 },
+      web: { boxShadow: '5px 5px 0 #111111' },
+      default: { elevation: 4 },
     }),
   },
   cardHeader: {
@@ -365,10 +366,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   input: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
-    borderWidth: 1,
-    borderRadius: 10,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#111111',
+    borderWidth: 2,
+    borderRadius: 0,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
@@ -379,15 +380,15 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   radioItem: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    borderWidth: 1,
-    borderRadius: 8,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#111111',
+    borderWidth: 2,
+    borderRadius: 0,
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
   radioItemSelected: {
-    backgroundColor: '#EEF2F6',
+    backgroundColor: '#FFFDF7',
     borderColor: Colors.navy,
   },
   radioText: {
@@ -401,57 +402,57 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     backgroundColor: Colors.navy,
-    borderRadius: 12,
+    borderRadius: 0,
     paddingVertical: 13,
     alignItems: 'center',
     marginTop: 10,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: Colors.gold,
   },
   submitBtnDisabled: {
-    backgroundColor: '#94A3B8',
-    borderColor: '#94A3B8',
+    backgroundColor: '#A9A79F',
+    borderColor: '#A9A79F',
   },
   submitBtnText: {
-    color: '#FFFFFF',
+    color: '#FFFDF7',
     fontWeight: '800',
     fontSize: 14,
   },
   errorBox: {
-    backgroundColor: '#FEE2E2',
-    borderColor: '#DC2626',
-    borderWidth: 1,
-    borderRadius: 8,
+    backgroundColor: '#FFE9E3',
+    borderColor: '#FF3B00',
+    borderWidth: 2,
+    borderRadius: 0,
     padding: 10,
     marginTop: 10,
   },
   errorText: {
-    color: '#991B1B',
+    color: '#C22A00',
     fontSize: 13,
   },
   resultCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    backgroundColor: '#FFFDF7',
+    borderRadius: 0,
     padding: 20,
     borderColor: Colors.gold,
-    borderWidth: 1.5,
+    borderWidth: 3,
     ...Platform.select({
-      web: { boxShadow: '0 6px 18px rgba(11, 31, 58, 0.08)' },
-      default: { elevation: 3 },
+      web: { boxShadow: '5px 5px 0 #111111' },
+      default: { elevation: 4 },
     }),
   },
   analysisBox: {
-    borderRadius: 12,
+    borderRadius: 0,
     padding: 12,
     marginBottom: 16,
-    borderWidth: 1,
+    borderWidth: 2,
   },
   matchGood: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#86EFAC',
+    backgroundColor: '#FFFDF7',
+    borderColor: '#00A86B',
   },
   matchWarning: {
-    backgroundColor: '#FEFCE8',
+    backgroundColor: '#FFFDF7',
     borderColor: '#FDE047',
   },
   analysisTitle: {
@@ -478,10 +479,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   optionCard: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    borderWidth: 1,
-    borderRadius: 10,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#111111',
+    borderWidth: 2,
+    borderRadius: 0,
     padding: 10,
   },
   optName: {
@@ -503,20 +504,20 @@ const styles = StyleSheet.create({
   },
   copyBtn: {
     backgroundColor: Colors.navy,
-    borderRadius: 8,
+    borderRadius: 0,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   copyBtnText: {
-    color: '#FFFFFF',
+    color: '#FFFDF7',
     fontSize: 11,
     fontWeight: '700',
   },
   letterBox: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
-    borderWidth: 1,
-    borderRadius: 10,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#111111',
+    borderWidth: 2,
+    borderRadius: 0,
     padding: 12,
   },
   letterText: {
@@ -532,8 +533,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   portalBox: {
-    backgroundColor: '#EEF2F6',
-    borderRadius: 8,
+    backgroundColor: '#FFFDF7',
+    borderRadius: 0,
     padding: 8,
     marginTop: 8,
   },
@@ -544,7 +545,7 @@ const styles = StyleSheet.create({
   },
   disclaimerFoot: {
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: '#ECE7DC',
     paddingTop: 10,
     marginTop: 6,
   },

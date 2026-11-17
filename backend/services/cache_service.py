@@ -9,11 +9,15 @@ from backend.services.gemini_service import gemini_service
 
 logger = logging.getLogger(__name__)
 
+# Bumped whenever the answer engine / retrieval strategy changes, so stale
+# cached answers cannot resurface after an upgrade.
+CACHE_SCHEMA_VERSION = "v2"
+
 def normalize_query(text: str, lang: str) -> str:
     """Normalize query text for exact cache key matching."""
     cleaned = re.sub(r"[^\w\s]", "", text.lower()).strip()
     cleaned = re.sub(r"\s+", " ", cleaned)
-    return f"{lang.lower()}::{cleaned}"
+    return f"{CACHE_SCHEMA_VERSION}::{lang.lower()}::{cleaned}"
 
 def cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
     a = np.array(vec1, dtype=np.float32)

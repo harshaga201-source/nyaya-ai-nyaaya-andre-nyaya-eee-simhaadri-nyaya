@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
-import { TRANSLATIONS } from '../../constants/Translations';
+import { getUI } from '../../constants/Translations';
+import { localizeApiError } from '../../constants/ApiErrors';
 import { LanguageContext } from '../_layout';
 import { Header } from '../../components/Header';
 import { LawBooks } from '../../constants/Illustrations';
@@ -21,7 +22,7 @@ import { submitFeedback } from '../../services/api';
 export default function FeedbackScreen() {
   const router = useRouter();
   const { language, setLanguage } = useContext(LanguageContext);
-  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+  const t = getUI(language);
 
   const [rating, setRating] = useState(5);
   const [category, setCategory] = useState('accuracy');
@@ -31,12 +32,12 @@ export default function FeedbackScreen() {
   const [submitted, setSubmitted] = useState(false);
 
   const categories = [
-    { id: 'accuracy', label: 'Citation Accuracy' },
-    { id: 'translation', label: 'Language & Translation' },
-    { id: 'traffic', label: 'Traffic Dispute Tool' },
-    { id: 'complaint', label: 'Complaint Generator' },
-    { id: 'speed', label: 'Response Speed & Cache' },
-    { id: 'other', label: 'General Experience' },
+    { id: 'accuracy', label: t.fbCat1 },
+    { id: 'translation', label: t.fbCat2 },
+    { id: 'traffic', label: t.fbCat3 },
+    { id: 'complaint', label: t.fbCat4 },
+    { id: 'speed', label: t.fbCat5 },
+    { id: 'other', label: t.fbCat6 },
   ];
 
   const handleSubmit = async () => {
@@ -51,7 +52,7 @@ export default function FeedbackScreen() {
       setSubmitted(true);
       setComment('');
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to submit feedback.');
+      Alert.alert(t.errorTitle, localizeApiError(err.message, language) || t.fbFail);
     } finally {
       setLoading(false);
     }
@@ -66,31 +67,27 @@ export default function FeedbackScreen() {
           <View style={styles.cardHeader}>
             <LawBooks size={32} color={Colors.gold} />
             <View style={{ marginLeft: 10, flex: 1 }}>
-              <Text style={styles.heading}>Citizen Feedback & Quality Control</Text>
-              <Text style={styles.subHeading}>
-                Your feedback directly improves statutory accuracy and verifies legal citations.
-              </Text>
+              <Text style={styles.heading}>{t.fbTitle}</Text>
+              <Text style={styles.subHeading}>{t.fbDesc}</Text>
             </View>
           </View>
 
           {submitted ? (
             <View style={styles.successBox}>
               <Text style={styles.successIcon}>🎉</Text>
-              <Text style={styles.successTitle}>Thank You for Your Feedback!</Text>
-              <Text style={styles.successDesc}>
-                Your submission has been recorded in the SQLite database and helps refine NyayaSathi's legal AI precision.
-              </Text>
+              <Text style={styles.successTitle}>{t.fbThanks}</Text>
+              <Text style={styles.successDesc}>{t.fbThanksDesc}</Text>
               <TouchableOpacity
                 style={styles.anotherBtn}
                 onPress={() => setSubmitted(false)}
               >
-                <Text style={styles.anotherBtnText}>Submit Another Response</Text>
+                <Text style={styles.anotherBtnText}>{t.fbAnother}</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <>
               {/* Star Rating */}
-              <Text style={styles.inputLabel}>1. Rate Your Experience (1 to 5 Stars):</Text>
+              <Text style={styles.inputLabel}>{t.fbRate}</Text>
               <View style={styles.starsRow}>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <TouchableOpacity
@@ -103,11 +100,11 @@ export default function FeedbackScreen() {
                     </Text>
                   </TouchableOpacity>
                 ))}
-                <Text style={styles.ratingLabel}>{rating} / 5 Stars</Text>
+                <Text style={styles.ratingLabel}>{rating}{t.fbStars}</Text>
               </View>
 
               {/* Category */}
-              <Text style={styles.inputLabel}>2. Select Category:</Text>
+              <Text style={styles.inputLabel}>{t.fbCategory}</Text>
               <View style={styles.categoryGrid}>
                 {categories.map((cat) => {
                   const selected = category === cat.id;
@@ -127,11 +124,11 @@ export default function FeedbackScreen() {
 
               {/* Comments */}
               <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>3. Comments, Suggestions or Cited Discrepancy:</Text>
+                <Text style={styles.inputLabel}>{t.fbComments}</Text>
                 <TextInput
                   style={styles.commentInput}
-                  placeholder="Share details regarding citation quality, usability, or legal questions you'd like added..."
-                  placeholderTextColor="#94A3B8"
+                  placeholder={t.fbCommentsPh}
+                  placeholderTextColor="#A9A79F"
                   value={comment}
                   onChangeText={setComment}
                   multiline
@@ -144,9 +141,7 @@ export default function FeedbackScreen() {
                 onPress={() => setIsFlagged(!isFlagged)}
               >
                 <Text style={styles.checkboxText}>{isFlagged ? '☑' : '☐'}</Text>
-                <Text style={styles.flagLabel}>
-                  Flag an inaccurate citation or section for administrator audit.
-                </Text>
+                <Text style={styles.flagLabel}>{t.fbFlag}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -157,7 +152,7 @@ export default function FeedbackScreen() {
                 {loading ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.submitBtnText}>Submit Feedback →</Text>
+                  <Text style={styles.submitBtnText}>{t.fbSubmit}</Text>
                 )}
               </TouchableOpacity>
             </>
@@ -165,12 +160,12 @@ export default function FeedbackScreen() {
 
           {/* Quick Admin Dashboard Link */}
           <View style={styles.adminFooter}>
-            <Text style={styles.adminNote}>Administrator & Telemetry View:</Text>
+            <Text style={styles.adminNote}>{t.fbAdminNote}</Text>
             <TouchableOpacity
               style={styles.adminNavBtn}
               onPress={() => router.push('/admin')}
             >
-              <Text style={styles.adminNavText}>Open Admin Dashboard (Stats, Cache & Flags) →</Text>
+              <Text style={styles.adminNavText}>{t.fbAdminBtn}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -192,14 +187,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    backgroundColor: '#FFFDF7',
+    borderRadius: 0,
     padding: 20,
     borderColor: Colors.cardBorder,
-    borderWidth: 1,
+    borderWidth: 2,
     ...Platform.select({
-      web: { boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)' },
-      default: { elevation: 2 },
+      web: { boxShadow: '5px 5px 0 #111111' },
+      default: { elevation: 4 },
     }),
   },
   cardHeader: {
@@ -235,10 +230,10 @@ const styles = StyleSheet.create({
   },
   starEmoji: {
     fontSize: 32,
-    color: '#CBD5E1',
+    color: '#111111',
   },
   starActive: {
-    color: '#EAB308',
+    color: '#FFD400',
   },
   ratingLabel: {
     fontSize: 14,
@@ -253,17 +248,17 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   catBtn: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
-    borderWidth: 1,
-    borderRadius: 10,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#111111',
+    borderWidth: 2,
+    borderRadius: 0,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   catBtnSelected: {
-    backgroundColor: '#EEF2F6',
+    backgroundColor: '#FFFDF7',
     borderColor: Colors.navy,
-    borderWidth: 1.5,
+    borderWidth: 3,
   },
   catText: {
     fontSize: 12.5,
@@ -278,10 +273,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   commentInput: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
-    borderWidth: 1,
-    borderRadius: 10,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#111111',
+    borderWidth: 2,
+    borderRadius: 0,
     padding: 12,
     fontSize: 14,
     color: Colors.textPrimary,
@@ -300,24 +295,24 @@ const styles = StyleSheet.create({
   },
   flagLabel: {
     fontSize: 12.5,
-    color: '#991B1B',
+    color: '#C22A00',
     fontWeight: '600',
     flex: 1,
   },
   submitBtn: {
     backgroundColor: Colors.navy,
-    borderRadius: 12,
+    borderRadius: 0,
     paddingVertical: 12,
     alignItems: 'center',
     marginTop: 10,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: Colors.gold,
   },
   submitBtnDisabled: {
-    backgroundColor: '#94A3B8',
+    backgroundColor: '#A9A79F',
   },
   submitBtnText: {
-    color: '#FFFFFF',
+    color: '#FFFDF7',
     fontWeight: '800',
     fontSize: 14,
   },
@@ -345,18 +340,18 @@ const styles = StyleSheet.create({
   },
   anotherBtn: {
     backgroundColor: Colors.navy,
-    borderRadius: 8,
+    borderRadius: 0,
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
   anotherBtnText: {
-    color: '#FFFFFF',
+    color: '#FFFDF7',
     fontWeight: '700',
     fontSize: 13,
   },
   adminFooter: {
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: '#ECE7DC',
     paddingTop: 16,
     marginTop: 20,
     alignItems: 'center',
@@ -367,8 +362,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   adminNavBtn: {
-    backgroundColor: '#EEF2F6',
-    borderRadius: 8,
+    backgroundColor: '#FFFDF7',
+    borderRadius: 0,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },

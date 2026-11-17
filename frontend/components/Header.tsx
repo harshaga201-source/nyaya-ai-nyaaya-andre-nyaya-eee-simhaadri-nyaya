@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Platform } from 'react-native';
-import { Colors } from '../constants/Colors';
+import { Colors, BORDER, BORDER_THIN } from '../constants/Colors';
 import { ScalesOfJustice } from '../constants/Illustrations';
-import { LANGUAGES } from '../constants/Translations';
+import { LANGUAGES, getUI } from '../constants/Translations';
 import { saveLanguage } from '../services/storage';
 
 interface HeaderProps {
@@ -10,9 +10,11 @@ interface HeaderProps {
   onLanguageChange: (lang: string) => void;
 }
 
+// Brutalist header: black slab, hard yellow bottom border, blocky yellow language button.
 export const Header: React.FC<HeaderProps> = ({ currentLanguage, onLanguageChange }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const currentLangObj = LANGUAGES.find(l => l.code === currentLanguage) || LANGUAGES[0];
+  const t = getUI(currentLanguage);
 
   const handleSelect = (code: string) => {
     saveLanguage(code);
@@ -23,16 +25,17 @@ export const Header: React.FC<HeaderProps> = ({ currentLanguage, onLanguageChang
   return (
     <View style={styles.headerContainer}>
       <View style={styles.brandRow}>
-        <ScalesOfJustice size={32} color={Colors.gold} secondaryColor={Colors.ivory} />
+        <View style={styles.logoBox}>
+          <ScalesOfJustice size={26} color={Colors.ink} secondaryColor={Colors.ink} />
+        </View>
         <View style={styles.titleWrapper}>
-          <Text style={styles.title}>NyayaSathi</Text>
-          <Text style={styles.subtitle}>न्यायसाथी • Legal Assistant</Text>
+          <Text style={styles.title}>NYAYA{'\n'}SATHI</Text>
         </View>
       </View>
 
       <TouchableOpacity
         style={styles.langButton}
-        activeOpacity={0.8}
+        activeOpacity={0.85}
         onPress={() => setModalVisible(true)}
       >
         <Text style={styles.langIcon}>🌐</Text>
@@ -49,8 +52,8 @@ export const Header: React.FC<HeaderProps> = ({ currentLanguage, onLanguageChang
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Preferred Language / भाषा चुनें</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <Text style={styles.modalTitle}>{t.selectLanguage}</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeBtn}>
                 <Text style={styles.closeButton}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -64,8 +67,9 @@ export const Header: React.FC<HeaderProps> = ({ currentLanguage, onLanguageChang
                     onPress={() => handleSelect(lang.code)}
                   >
                     <Text style={[styles.langName, isSelected && styles.langTextSelected]}>
-                      {lang.native} ({lang.name})
+                      {lang.native}
                     </Text>
+                    <Text style={styles.langEnglish}>{lang.name}</Text>
                     {isSelected && <Text style={styles.checkIcon}>✓</Text>}
                   </TouchableOpacity>
                 );
@@ -80,61 +84,70 @@ export const Header: React.FC<HeaderProps> = ({ currentLanguage, onLanguageChang
 
 const styles = StyleSheet.create({
   headerContainer: {
-    backgroundColor: Colors.navy,
+    backgroundColor: Colors.pitchBlack,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'web' ? 12 : 8,
-    paddingBottom: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: Colors.gold,
+    paddingHorizontal: 14,
+    paddingTop: Platform.OS === 'web' ? 10 : 8,
+    paddingBottom: 10,
+    borderBottomWidth: BORDER + 1,
+    borderBottomColor: Colors.yellow,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
+  },
+  logoBox: {
+    backgroundColor: Colors.yellow,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: BORDER_THIN,
+    borderColor: Colors.pitchBlack,
   },
   titleWrapper: {
-    marginLeft: 10,
+    marginLeft: 2,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-  },
-  subtitle: {
-    fontSize: 11,
-    color: Colors.gold,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '900',
+    color: '#FFFDF7',
+    letterSpacing: 1.5,
+    lineHeight: 19,
+    textTransform: 'uppercase',
   },
   langButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderColor: Colors.gold,
-    borderWidth: 1,
-    borderRadius: 20,
+    backgroundColor: Colors.yellow,
+    borderColor: Colors.pitchBlack,
+    borderWidth: BORDER_THIN,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 9,
+    boxShadow: '4px 4px 0 #FFD400',
   },
   langIcon: {
-    fontSize: 14,
+    fontSize: 15,
     marginRight: 6,
   },
   langText: {
-    color: '#FFFFFF',
+    color: Colors.ink,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   langDropdownIcon: {
-    color: Colors.gold,
+    color: Colors.ink,
     fontSize: 10,
     marginLeft: 6,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    backgroundColor: 'rgba(0, 0, 0, 0.78)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -142,57 +155,77 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    maxHeight: '80%',
+    backgroundColor: Colors.card,
+    borderWidth: BORDER,
+    borderColor: Colors.pitchBlack,
+    padding: 18,
+    maxHeight: '82%',
+    boxShadow: '8px 8px 0 #000000',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomWidth: BORDER_THIN,
+    borderBottomColor: Colors.pitchBlack,
     paddingBottom: 12,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   modalTitle: {
     fontSize: 16,
-    fontWeight: '800',
-    color: Colors.navy,
+    fontWeight: '900',
+    color: Colors.ink,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  closeBtn: {
+    backgroundColor: Colors.pitchBlack,
+    width: 34,
+    height: 34,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   closeButton: {
-    fontSize: 18,
-    color: Colors.textMuted,
-    padding: 4,
+    fontSize: 16,
+    color: '#FFFDF7',
+    fontWeight: '900',
   },
   langList: {
     maxHeight: 380,
   },
   langOption: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginVertical: 2,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: BORDER_THIN,
+    borderColor: Colors.pitchBlack,
+    marginVertical: 4,
+    backgroundColor: Colors.card,
   },
   langOptionSelected: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: Colors.yellow,
   },
   langName: {
-    fontSize: 15,
-    color: Colors.textPrimary,
-    fontWeight: '600',
+    fontSize: 16,
+    color: Colors.ink,
+    fontWeight: '900',
+    flex: 1,
+  },
+  langEnglish: {
+    fontSize: 10,
+    color: Colors.faintInk,
+    marginRight: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   langTextSelected: {
-    color: Colors.navy,
-    fontWeight: '800',
+    color: Colors.ink,
+    fontWeight: '900',
   },
   checkIcon: {
-    color: Colors.goldDark,
-    fontSize: 16,
-    fontWeight: '800',
+    color: Colors.pitchBlack,
+    fontSize: 18,
+    fontWeight: '900',
   },
 });

@@ -12,7 +12,8 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { Colors } from '../../constants/Colors';
-import { TRANSLATIONS } from '../../constants/Translations';
+import { getUI } from '../../constants/Translations';
+import { localizeApiError } from '../../constants/ApiErrors';
 import { LanguageContext } from '../_layout';
 import { Header } from '../../components/Header';
 import { LawBooks } from '../../constants/Illustrations';
@@ -20,7 +21,7 @@ import { analyzeDocumentFile, DocumentAnalysisData } from '../../services/api';
 
 export default function DocumentReaderScreen() {
   const { language, setLanguage } = useContext(LanguageContext);
-  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+  const t = getUI(language);
 
   const [loading, setLoading] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
@@ -53,7 +54,7 @@ export default function DocumentReaderScreen() {
         await processDocument(filePayload);
       }
     } catch (e: any) {
-      setErrorMessage('Could not load document: ' + (e.message || 'unknown error'));
+      setErrorMessage(t.docLoadError + localizeApiError(e.message, language));
     }
   };
 
@@ -65,7 +66,7 @@ export default function DocumentReaderScreen() {
       if (fromCamera) {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) {
-          Alert.alert('Permission Denied', 'Camera permission is required.');
+          Alert.alert(t.docPermTitle, t.docPermMsg);
           return;
         }
         result = await ImagePicker.launchCameraAsync({
@@ -100,7 +101,7 @@ export default function DocumentReaderScreen() {
         await processDocument(filePayload);
       }
     } catch (e: any) {
-      setErrorMessage('Error capturing image: ' + (e.message || 'unknown error'));
+      setErrorMessage(t.docImageError + localizeApiError(e.message, language));
     }
   };
 
@@ -111,7 +112,7 @@ export default function DocumentReaderScreen() {
       const data = await analyzeDocumentFile(fileData, language);
       setAnalysisResult(data);
     } catch (err: any) {
-      setErrorMessage(err.message || 'Analysis failed. Please check the document format.');
+      setErrorMessage(localizeApiError(err.message, language) || t.docAnalysisFail);
     } finally {
       setLoading(false);
     }
@@ -133,34 +134,32 @@ export default function DocumentReaderScreen() {
           </View>
 
           <View style={styles.privacyCallout}>
-            <Text style={styles.privacyText}>
-              🔒 Privacy Guaranteed: Documents are parsed strictly in-memory by Gemini AI and are NEVER stored or retained on any server.
-            </Text>
+            <Text style={styles.privacyText}>{t.docPrivacy}</Text>
           </View>
 
           {/* Upload Buttons */}
           <View style={styles.uploadRow}>
             <TouchableOpacity style={styles.uploadBtn} onPress={handlePickDocument}>
               <Text style={styles.uploadIcon}>📄</Text>
-              <Text style={styles.uploadText}>Select PDF / Doc</Text>
+              <Text style={styles.uploadText}>{t.docSelectPdf}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.uploadBtn} onPress={() => handlePickImage(false)}>
               <Text style={styles.uploadIcon}>🖼️</Text>
-              <Text style={styles.uploadText}>Upload Photo</Text>
+              <Text style={styles.uploadText}>{t.docUploadPhoto}</Text>
             </TouchableOpacity>
 
             {Platform.OS !== 'web' && (
               <TouchableOpacity style={styles.uploadBtn} onPress={() => handlePickImage(true)}>
                 <Text style={styles.uploadIcon}>📷</Text>
-                <Text style={styles.uploadText}>Take Photo</Text>
+                <Text style={styles.uploadText}>{t.docTakePhoto}</Text>
               </TouchableOpacity>
             )}
           </View>
 
           {selectedFileName && (
             <View style={styles.selectedFileBox}>
-              <Text style={styles.selectedLabel}>Active Document: </Text>
+              <Text style={styles.selectedLabel}>{t.docActive} </Text>
               <Text style={styles.selectedName} numberOfLines={1}>{selectedFileName}</Text>
             </View>
           )}
@@ -168,7 +167,7 @@ export default function DocumentReaderScreen() {
           {loading && (
             <View style={styles.loadingBox}>
               <ActivityIndicator size="large" color={Colors.gold} />
-              <Text style={styles.loadingText}>Analyzing document structure, parties, and cited statutory sections...</Text>
+              <Text style={styles.loadingText}>{t.docAnalyzing}</Text>
             </View>
           )}
 
@@ -188,7 +187,7 @@ export default function DocumentReaderScreen() {
 
             {/* Parties */}
             <View style={styles.sectionBlock}>
-              <Text style={styles.sectionTitle}>👥 Identified Parties</Text>
+              <Text style={styles.sectionTitle}>{t.docParties}</Text>
               {analysisResult.parties.map((party, idx) => (
                 <Text key={idx} style={styles.bulletItem}>• {party}</Text>
               ))}
@@ -196,7 +195,7 @@ export default function DocumentReaderScreen() {
 
             {/* Key Dates & Amounts */}
             <View style={styles.sectionBlock}>
-              <Text style={styles.sectionTitle}>📅 Key Dates & Financial Amounts</Text>
+              <Text style={styles.sectionTitle}>{t.docDates}</Text>
               {analysisResult.key_dates_and_amounts.map((item, idx) => (
                 <Text key={idx} style={styles.bulletItem}>• {item}</Text>
               ))}
@@ -204,7 +203,7 @@ export default function DocumentReaderScreen() {
 
             {/* Sections Cited */}
             <View style={styles.sectionBlock}>
-              <Text style={styles.sectionTitle}>📜 Statutory Sections Cited</Text>
+              <Text style={styles.sectionTitle}>{t.docSections}</Text>
               <View style={styles.chipRow}>
                 {analysisResult.sections_cited.map((sec, idx) => (
                   <View key={idx} style={styles.secChip}>
@@ -216,13 +215,13 @@ export default function DocumentReaderScreen() {
 
             {/* Plain Words Meaning */}
             <View style={styles.highlightBlock}>
-              <Text style={styles.sectionTitleGold}>💡 What This Means in Plain Words</Text>
+              <Text style={styles.sectionTitleGold}>{t.docPlain}</Text>
               <Text style={styles.plainText}>{analysisResult.plain_meaning}</Text>
             </View>
 
             {/* Action Items & Deadlines */}
             <View style={styles.actionBlock}>
-              <Text style={styles.sectionTitleDanger}>⏱️ What You Should Do Next & Deadlines</Text>
+              <Text style={styles.sectionTitleDanger}>{t.docNext}</Text>
               {analysisResult.action_items_and_deadlines.map((action, idx) => (
                 <Text key={idx} style={styles.actionItem}>✓ {action}</Text>
               ))}
@@ -251,15 +250,15 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    backgroundColor: '#FFFDF7',
+    borderRadius: 0,
     padding: 20,
     borderColor: Colors.cardBorder,
-    borderWidth: 1,
+    borderWidth: 2,
     marginBottom: 16,
     ...Platform.select({
-      web: { boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)' },
-      default: { elevation: 2 },
+      web: { boxShadow: '5px 5px 0 #111111' },
+      default: { elevation: 4 },
     }),
   },
   cardHeader: {
@@ -278,16 +277,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   privacyCallout: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
-    borderWidth: 1,
-    borderRadius: 10,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#E6F6EC',
+    borderWidth: 2,
+    borderRadius: 0,
     padding: 10,
     marginBottom: 16,
   },
   privacyText: {
     fontSize: 12,
-    color: '#166534',
+    color: '#00704A',
     lineHeight: 16,
     fontWeight: '600',
   },
@@ -300,11 +299,11 @@ const styles = StyleSheet.create({
   uploadBtn: {
     flex: 1,
     minWidth: 120,
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
-    borderWidth: 1.5,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#111111',
+    borderWidth: 3,
     borderStyle: 'dashed',
-    borderRadius: 12,
+    borderRadius: 0,
     padding: 14,
     alignItems: 'center',
   },
@@ -320,8 +319,8 @@ const styles = StyleSheet.create({
   selectedFileBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF2F6',
-    borderRadius: 8,
+    backgroundColor: '#FFFDF7',
+    borderRadius: 0,
     padding: 8,
     marginTop: 6,
   },
@@ -347,32 +346,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   errorBox: {
-    backgroundColor: '#FEE2E2',
-    borderColor: '#DC2626',
-    borderWidth: 1,
-    borderRadius: 8,
+    backgroundColor: '#FFE9E3',
+    borderColor: '#FF3B00',
+    borderWidth: 2,
+    borderRadius: 0,
     padding: 10,
     marginTop: 10,
   },
   errorText: {
-    color: '#991B1B',
+    color: '#C22A00',
     fontSize: 13,
   },
   resultCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    backgroundColor: '#FFFDF7',
+    borderRadius: 0,
     padding: 20,
     borderColor: Colors.gold,
-    borderWidth: 1.5,
+    borderWidth: 3,
     ...Platform.select({
-      web: { boxShadow: '0 6px 18px rgba(11, 31, 58, 0.08)' },
-      default: { elevation: 3 },
+      web: { boxShadow: '5px 5px 0 #111111' },
+      default: { elevation: 4 },
     }),
   },
   resultHeader: {
     marginBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: '#ECE7DC',
     paddingBottom: 10,
   },
   docTypeBadge: {
@@ -401,10 +400,10 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   secChip: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#CBD5E1',
-    borderWidth: 1,
-    borderRadius: 12,
+    backgroundColor: '#ECE7DC',
+    borderColor: '#111111',
+    borderWidth: 2,
+    borderRadius: 0,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
@@ -414,48 +413,48 @@ const styles = StyleSheet.create({
     color: Colors.navy,
   },
   highlightBlock: {
-    backgroundColor: '#FEFCE8',
-    borderColor: '#FEF08A',
-    borderWidth: 1,
-    borderRadius: 12,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#111111',
+    borderWidth: 2,
+    borderRadius: 0,
     padding: 14,
     marginBottom: 14,
   },
   sectionTitleGold: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#854D0E',
+    color: '#111111',
     marginBottom: 6,
   },
   plainText: {
     fontSize: 14,
-    color: '#713F12',
+    color: '#111111',
     lineHeight: 21,
   },
   actionBlock: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
-    borderWidth: 1,
-    borderRadius: 12,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#E6F6EC',
+    borderWidth: 2,
+    borderRadius: 0,
     padding: 14,
     marginBottom: 14,
   },
   sectionTitleDanger: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#166534',
+    color: '#00704A',
     marginBottom: 6,
   },
   actionItem: {
     fontSize: 13.5,
-    color: '#14532D',
+    color: '#00704A',
     lineHeight: 20,
     marginBottom: 4,
     fontWeight: '500',
   },
   disclaimerBox: {
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: '#ECE7DC',
     paddingTop: 10,
     marginTop: 6,
   },

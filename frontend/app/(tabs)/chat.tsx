@@ -11,7 +11,8 @@ import {
   KeyboardAvoidingView
 } from 'react-native';
 import { Colors } from '../../constants/Colors';
-import { TRANSLATIONS } from '../../constants/Translations';
+import { getUI } from '../../constants/Translations';
+import { localizeApiError } from '../../constants/ApiErrors';
 import { LanguageContext } from '../_layout';
 import { Header } from '../../components/Header';
 import { CitationChips } from '../../components/CitationChip';
@@ -34,13 +35,13 @@ interface Message {
 
 export default function ChatScreen() {
   const { language, setLanguage } = useContext(LanguageContext);
-  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+  const t = getUI(language);
   
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome-1',
       sender: 'assistant',
-      text: `Namaste! I am NyayaSathi, your Indian Legal Awareness Assistant. I provide statutory information strictly referenced to Bharatiya Nyaya Sanhita (BNS), Bharatiya Nagarik Suraksha Sanhita (BNSS), Motor Vehicles Act, Consumer Protection Act, and RTI Act.\n\nAsk any question by typing below or tapping voice. Every claim is cited directly from legal codes.`,
+      text: t.chatWelcome,
       citations: [
         { act: 'Bharatiya Nagarik Suraksha Sanhita, 2023', section: 'Section 35', title: 'Arrest & Notice' },
         { act: 'Motor Vehicles Act, 1988', section: 'Section 208', title: 'Virtual Court' },
@@ -59,6 +60,13 @@ export default function ChatScreen() {
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages, loading]);
+
+  // Keep the assistant welcome message in the language currently selected.
+  useEffect(() => {
+    setMessages((prev) =>
+      prev.map((m) => (m.id === 'welcome-1' ? { ...m, text: t.chatWelcome } : m))
+    );
+  }, [language]);
 
   const handleSend = async (overrideText?: string) => {
     const raw = typeof overrideText === 'string' ? overrideText : inputText;
@@ -97,7 +105,7 @@ export default function ChatScreen() {
 
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err: any) {
-      setErrorMessage(err.message || 'Unable to connect to the legal database.');
+      setErrorMessage(localizeApiError(err.message, language) || t.chatConnectFail);
     } finally {
       setLoading(false);
     }
@@ -108,51 +116,58 @@ export default function ChatScreen() {
       setIsVoiceListening(false);
       return;
     }
-    setIsVoiceListening(true);
+
+    setErrorMessage(null);
 
     if (Platform.OS === 'web') {
       const SpeechRec =
         typeof window !== 'undefined' &&
         ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
 
-      if (SpeechRec) {
-        try {
-          const rec = new SpeechRec();
-          rec.lang = getSpeechLanguageCode(language);
-          rec.interimResults = false;
-          rec.maxAlternatives = 1;
-
-          let captured = false;
-          rec.onresult = (e: any) => {
-            const speech = e.results[0][0].transcript;
-            if (speech && speech.trim()) {
-              captured = true;
-              setIsVoiceListening(false);
-              handleSend(speech.trim());
-            }
-          };
-          rec.onerror = () => {
-            if (!captured) {
-              const fallback = 'What are my legal rights if stopped by police?';
-              setIsVoiceListening(false);
-              handleSend(fallback);
-            }
-          };
-          rec.onend = () => {
-            setIsVoiceListening(false);
-          };
-          rec.start();
-          return;
-        } catch (e) {}
+      if (!SpeechRec) {
+        setErrorMessage(t.chatMicUnavailable);
+        return;
       }
+
+      try {
+        const rec = new SpeechRec();
+        rec.lang = getSpeechLanguageCode(language);
+        rec.interimResults = false;
+        rec.maxAlternatives = 1;
+
+        setIsVoiceListening(true);
+        let captured = false;
+
+        rec.onresult = (e: any) => {
+          const speech = e.results?.[0]?.[0]?.transcript;
+          if (speech && speech.trim()) {
+            captured = true;
+            setIsVoiceListening(false);
+            handleSend(speech.trim());
+          }
+        };
+        rec.onerror = (e: any) => {
+          setIsVoiceListening(false);
+          if (!captured) {
+            setErrorMessage(
+              e?.error === 'not-allowed'
+                ? t.chatMicDenied
+                : t.chatSpeechNotRecognized
+            );
+          }
+        };
+        rec.onend = () => {
+          setIsVoiceListening(false);
+        };
+        rec.start();
+      } catch (e) {
+        setIsVoiceListening(false);
+        setErrorMessage(t.chatSpeechStartFail);
+      }
+      return;
     }
 
-    // Default simulated voice capture if mic unavailable
-    setTimeout(() => {
-      setIsVoiceListening(false);
-      const fallback = 'What are my legal rights if stopped by police?';
-      handleSend(fallback);
-    }, 1500);
+    setErrorMessage(t.chatVoiceMobileHint);
   };
 
   const handleSpeechToggle = (msgId: string, text: string) => {
@@ -222,12 +237,12 @@ export default function ChatScreen() {
               >
                 {/* Emergency banner on assistant messages if triggered */}
                 {!isUser && msg.emergency && (
-                  <EmergencyBanner emergency={msg.emergency} />
+                  <EmergencyBanner emergency={msg.emergency} language={language} />
                 )}
 
                 {/* Cached badge */}
                 {!isUser && msg.isCached && (
-                  <CacheBadge cacheType={msg.cacheType} />
+                  <CacheBadge cacheType={msg.cacheType} language={language} />
                 )}
 
                 <Text
@@ -241,7 +256,7 @@ export default function ChatScreen() {
 
                 {/* Citations as chips */}
                 {!isUser && msg.citations && msg.citations.length > 0 && (
-                  <CitationChips citations={msg.citations} />
+                  <CitationChips citations={msg.citations} language={language} />
                 )}
 
                 {/* Assistant footer: Latency, TTS, Thumbs Up / Down */}
@@ -299,7 +314,7 @@ export default function ChatScreen() {
             </View>
             <View style={[styles.bubble, styles.assistantBubble, styles.loadingBubble]}>
               <ActivityIndicator color={Colors.gold} size="small" />
-              <Text style={styles.loadingText}>Retrieving statutory sections & verifying citations...</Text>
+              <Text style={styles.loadingText}>{t.chatRetrieving}</Text>
             </View>
           </View>
         )}
@@ -318,31 +333,31 @@ export default function ChatScreen() {
             style={styles.suggestionChip}
             onPress={() => handleSend('What is Zero FIR and where can it be filed?')}
           >
-            <Text style={styles.suggestionChipText}>📋 Zero FIR rights</Text>
+            <Text style={styles.suggestionChipText}>{t.chipZeroFir}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.suggestionChip}
             onPress={() => handleSend('Can police arrest a woman after sunset?')}
           >
-            <Text style={styles.suggestionChipText}>👩 Arrest of women safeguards</Text>
+            <Text style={styles.suggestionChipText}>{t.chipWomenArrest}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.suggestionChip}
             onPress={() => handleSend('What is the penalty for driving without a helmet under Motor Vehicles Act?')}
           >
-            <Text style={styles.suggestionChipText}>🪖 Helmet fine (MVA S.194D)</Text>
+            <Text style={styles.suggestionChipText}>{t.chipHelmet}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.suggestionChip}
             onPress={() => handleSend('Can a store refuse refund for a defective product under Consumer Protection Act?')}
           >
-            <Text style={styles.suggestionChipText}>🛍️ Defective product refund</Text>
+            <Text style={styles.suggestionChipText}>{t.chipRefund}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.suggestionChip}
             onPress={() => handleSend('What is the time limit for PIO to reply to an RTI application?')}
           >
-            <Text style={styles.suggestionChipText}>⏱️ RTI 30-day timeline</Text>
+            <Text style={styles.suggestionChipText}>{t.chipRti}</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -359,8 +374,8 @@ export default function ChatScreen() {
 
         <TextInput
           style={styles.textInput}
-          placeholder={isVoiceListening ? '🎙️ Listening... Speak legal query' : t.typePlaceholder}
-          placeholderTextColor="#94A3B8"
+          placeholder={isVoiceListening ? t.chatListeningPlaceholder : t.typePlaceholder}
+          placeholderTextColor="#A9A79F"
           value={inputText}
           onChangeText={setInputText}
           multiline={Platform.OS !== 'web'}
@@ -411,13 +426,13 @@ const styles = StyleSheet.create({
   assistantAvatar: {
     width: 34,
     height: 34,
-    borderRadius: 17,
+    borderRadius: 0,
     backgroundColor: Colors.navy,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
     marginTop: 2,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: Colors.gold,
   },
   avatarIcon: {
@@ -425,7 +440,7 @@ const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: Platform.OS === 'web' ? '82%' : '88%',
-    borderRadius: 16,
+    borderRadius: 0,
     padding: 14,
   },
   userBubble: {
@@ -433,13 +448,13 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 4,
   },
   assistantBubble: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFDF7',
     borderColor: Colors.cardBorder,
-    borderWidth: 1,
+    borderWidth: 2,
     borderBottomLeftRadius: 4,
     ...Platform.select({
-      web: { boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)' },
-      default: { elevation: 1 },
+      web: { boxShadow: '5px 5px 0 #111111' },
+      default: { elevation: 4 },
     }),
   },
   messageText: {
@@ -447,7 +462,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   userText: {
-    color: '#FFFFFF',
+    color: '#FFFDF7',
     fontWeight: '500',
   },
   assistantText: {
@@ -460,7 +475,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: '#ECE7DC',
   },
   leftActions: {
     flexDirection: 'row',
@@ -470,10 +485,10 @@ const styles = StyleSheet.create({
   ttsButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
-    borderWidth: 1,
-    borderRadius: 12,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#111111',
+    borderWidth: 2,
+    borderRadius: 0,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
@@ -500,18 +515,18 @@ const styles = StyleSheet.create({
   },
   feedbackBtn: {
     padding: 4,
-    borderRadius: 6,
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    borderWidth: 1,
+    borderRadius: 0,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#111111',
+    borderWidth: 2,
   },
   feedbackSelected: {
-    backgroundColor: '#DCFCE7',
-    borderColor: '#16A34A',
+    backgroundColor: '#E6F6EC',
+    borderColor: '#00A86B',
   },
   feedbackSelectedDown: {
-    backgroundColor: '#FEE2E2',
-    borderColor: '#DC2626',
+    backgroundColor: '#FFE9E3',
+    borderColor: '#FF3B00',
   },
   feedbackEmoji: {
     fontSize: 13,
@@ -528,23 +543,23 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   errorBanner: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#F87171',
-    borderWidth: 1,
-    borderRadius: 10,
+    backgroundColor: '#FFE9E3',
+    borderColor: '#FF3B00',
+    borderWidth: 2,
+    borderRadius: 0,
     padding: 10,
     marginVertical: 8,
   },
   errorText: {
-    color: '#991B1B',
+    color: '#C22A00',
     fontSize: 13,
   },
   inputContainer: {
     flexDirection: 'row',
     padding: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFDF7',
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: '#111111',
     maxWidth: 900,
     width: '100%',
     alignSelf: 'center',
@@ -553,10 +568,10 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
-    borderWidth: 1,
-    borderRadius: 14,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#111111',
+    borderWidth: 2,
+    borderRadius: 0,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
@@ -564,10 +579,10 @@ const styles = StyleSheet.create({
     maxHeight: 120,
   },
   voiceMicBtn: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#CBD5E1',
-    borderWidth: 1.5,
-    borderRadius: 14,
+    backgroundColor: '#ECE7DC',
+    borderColor: '#111111',
+    borderWidth: 3,
+    borderRadius: 0,
     paddingHorizontal: 12,
     paddingVertical: 11,
     alignItems: 'center',
@@ -577,8 +592,8 @@ const styles = StyleSheet.create({
     }),
   },
   voiceMicBtnActive: {
-    backgroundColor: '#FEE2E2',
-    borderColor: '#DC2626',
+    backgroundColor: '#FFE9E3',
+    borderColor: '#FF3B00',
     borderWidth: 2,
   },
   voiceMicIcon: {
@@ -586,29 +601,29 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     backgroundColor: Colors.navy,
-    borderRadius: 14,
+    borderRadius: 0,
     paddingHorizontal: 18,
     paddingVertical: 12,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: Colors.gold,
     ...Platform.select({
       web: { cursor: 'pointer' },
     }),
   },
   sendDisabled: {
-    backgroundColor: '#94A3B8',
-    borderColor: '#94A3B8',
+    backgroundColor: '#A9A79F',
+    borderColor: '#A9A79F',
     opacity: 0.6,
   },
   sendButtonText: {
-    color: '#FFFFFF',
+    color: '#FFFDF7',
     fontWeight: '800',
     fontSize: 14,
   },
   quickSuggestionsContainer: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFDF7',
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: '#111111',
     paddingVertical: 8,
   },
   quickSuggestionsContent: {
@@ -617,10 +632,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   suggestionChip: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
-    borderWidth: 1,
-    borderRadius: 20,
+    backgroundColor: '#FFFDF7',
+    borderColor: '#111111',
+    borderWidth: 2,
+    borderRadius: 0,
     paddingHorizontal: 12,
     paddingVertical: 6,
     ...Platform.select({

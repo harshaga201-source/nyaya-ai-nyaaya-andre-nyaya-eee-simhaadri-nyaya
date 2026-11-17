@@ -14,19 +14,22 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.gold,
-        tabBarInactiveTintColor: '#94A3B8',
+        tabBarActiveTintColor: Colors.yellow,
+        tabBarInactiveTintColor: '#E5E3DC',
         tabBarStyle: {
-          backgroundColor: Colors.navy,
-          borderTopColor: Colors.gold,
-          borderTopWidth: 1.5,
-          height: Platform.OS === 'web' ? 64 : 60,
-          paddingBottom: Platform.OS === 'web' ? 8 : 6,
+          backgroundColor: Colors.pitchBlack,
+          borderTopColor: Colors.yellow,
+          borderTopWidth: 6,
+          height: Platform.OS === 'web' ? 82 : 76,
+          paddingBottom: Platform.OS === 'web' ? 14 : 12,
           paddingTop: 6,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: '700',
+          fontSize: 9,
+          fontWeight: '900',
+          letterSpacing: 0.6,
+          textTransform: 'uppercase',
+          marginTop: 2,
         },
       }}
     >
@@ -73,7 +76,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="lawyers"
+        name="find-lawyer"
         options={{
           title: t.lawyersTab,
           tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size || 22} color={color} />,

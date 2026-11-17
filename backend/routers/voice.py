@@ -39,15 +39,16 @@ async def transcribe_endpoint(
         )
         
         return TranscribeResponse(
-            transcript=transcript,
+            transcript=transcript or "",
             language=language,
-            confidence=0.98
+            confidence=0.98 if transcript else 0.0
         )
     except Exception as e:
         logger.error(f"Voice transcription error: {e}")
-        # Return fallback friendly message
+        # Never return a fabricated transcript. The client will ask the citizen to
+        # type instead of silently repeating an unrelated canned question.
         return TranscribeResponse(
-            transcript="What are my fundamental rights if police stop my vehicle or ask for documents?",
+            transcript="",
             language=language,
-            confidence=0.85
+            confidence=0.0
         )
