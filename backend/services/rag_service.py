@@ -9,7 +9,7 @@ from backend.models.database import get_db
 from backend.models.schemas import Citation
 from backend.services.gemini_service import gemini_service
 from backend.services.translate import is_indic, translate_to_english
-from backend.services.localization import detect_category
+from backend.services.localization import detect_category, get_templates
 
 logger = logging.getLogger(__name__)
 
@@ -62,14 +62,20 @@ def detect_language_simple(text: str) -> str:
 LEGAL_EXPANSIONS = [
     (r"\b(?:stopped by police|police stop|vehicle stop|police checking|police check|police interrogation|stop vehicle|stopped by traffic)\b", ["police", "arrest", "warrant", "licence", "notice", "appearance", "grounds", "memo", "35", "130", "36", "47"]),
     (r"\b(?:zero fir|file fir|0 fir|register fir)\b", ["173", "fir", "cognizable", "jurisdiction", "police"]),
-    (r"\b(?:arrest(?:ed)? without warrant|warrantless arrest|can police arrest)\b", ["35", "arrest", "warrant", "cognizable", "notice", "appearance", "36", "memo", "47"]),
+    (r"\b(?:arrest(?:ed)? without warrant|warrantless arrest|can police arrest|arrested by police)\b", ["35", "arrest", "warrant", "cognizable", "notice", "appearance", "36", "memo", "47"]),
+    (r"\b(?:bail|bailable|anticipatory bail)\b", ["bail", "bailable", "grounds", "notice", "35", "47", "arrest"]),
+    (r"\b(?:assault|beaten up|hurt|grievous|marpeet|maar)\b", ["assault", "criminal", "force", "hurt", "74", "75", "115", "women"]),
+    (r"\b(?:domestic violence|wife cruelty|husband cruelty|498a|dowry)\b", ["498a", "85", "women", "cruelty", "husband", "stridhan"]),
     (r"\b(?:woman|women|female|sunset|sunrise)\b", ["43", "women", "sunset", "sunrise", "safeguards", "female"]),
     (r"\b(?:helmet|protective headgear)\b", ["194d", "129", "helmet", "headgear", "motor", "vehicles"]),
+    (r"\b(?:who is (?:a |an )?consumer|definition of consumer|what is (?:a )?consumer|consumer definition|considered (?:a )?consumer)\b", ["definition", "person", "consideration", "buys", "goods", "service"]),
     (r"\b(?:refund|defective (?:product|goods)|warranty|return policy|store refuse)\b", ["consumer", "protection", "defect", "defective", "refund", "unfair", "trade", "practice", "35"]),
     (r"\b(?:seatbelt|safety belt)\b", ["194b", "seatbelt", "safety", "belt"]),
     (r"\b(?:speed|overspeeding|speeding)\b", ["183", "112", "speed", "excessive"]),
     (r"\b(?:drink and drive|drunk|alcohol|breath analyzer)\b", ["185", "drunk", "drunken", "breath"]),
     (r"\b(?:without licence|no licence|driving licence)\b", ["181", "130", "licence", "driving"]),
+    (r"\b(?:accident|hit and run|motor accident|road accident)\b", ["motor", "vehicles", "insurance", "196", "146", "traffic"]),
+    (r"\b(?:insured|insurance claim|insurers?|third[- ]party insurance|compensation claim)\b", ["insurance", "196", "146", "uninsured", "third-party"]),
     (r"\b(?:insurance|uninsured)\b", ["196", "uninsured", "insurance", "third-party"]),
     (r"\b(?:virtual court|online challan|lok adalat)\b", ["208", "virtual", "court", "summary", "challan"]),
     (r"\b(?:free legal aid|tele[- ]?law|helpline)\b", ["12", "legal", "services", "tele-law", "14454"]),
@@ -79,15 +85,113 @@ LEGAL_EXPANSIONS = [
     (r"\b(?:rti|right to information|pio)\b", ["3", "6", "7", "8", "19", "20", "information", "timeline", "pio"])
 ]
 
+# High-frequency English function words and legal-meta terms carry no topical
+# signal: "the Motor Vehicles Act" matches every statute title ("act"), and
+# "Section 12" matches every chunk. Removing them stops generic overlap from
+# dragging unrelated sections into the results.
+STOPWORDS = {
+    "the", "a", "an", "and", "or", "but", "nor", "of", "to", "in", "on", "for",
+    "with", "by", "at", "from", "into", "over", "under", "between", "through",
+    "during", "before", "after", "about", "above", "below", "up", "down", "out",
+    "off", "again", "once", "here", "there", "when", "where", "why", "how",
+    "what", "which", "who", "whom", "whose", "this", "that", "these", "those",
+    "i", "me", "my", "we", "us", "our", "you", "your", "he", "she", "it", "its",
+    "they", "them", "their", "his", "her", "him", "am", "is", "are", "was",
+    "were", "be", "been", "being", "do", "does", "did", "done", "doing",
+    "can", "could", "shall", "should", "will", "would", "may", "might", "must",
+    "have", "has", "had", "having", "not", "no", "if", "then", "than", "so",
+    "as", "more", "most", "some", "such", "only", "own", "same", "any", "each",
+    "all", "every", "both", "few", "other", "its", "also",
+    # legal-meta words that match every statute without adding topic
+    "act", "acts", "law", "laws", "legal", "section", "sections", "right",
+    "rights", "offence", "offences", "offense", "offenses", "civil", "criminal",
+    "india", "indian", "statute", "provision", "provisions",
+    # conversational filler
+    "please", "tell", "told", "explain", "describe", "want", "wanted", "wants",
+    "need", "know", "help", "question", "asking", "asked", "give", "get",
+    "got", "make", "made", "much", "many", "good", "best", "guide", "answer",
+    "detail", "details", "information", "file", "files", "filed", "filing",
+    "apply", "applied", "application", "complaint", "complaints", "case",
+    "cases", "matter", "court", "courts", "legal proceedings",
+    # penalties/sentences match every criminal section without telling us which
+    "punishment", "penalty", "penalties", "fine", "fines", "imprisonment",
+    "sentence", "sentences", "conviction", "sentenced", "years", "months",
+}
+
+YEAR_RE = re.compile(r"\b(?:19|20)\d{2}\b")
+WORD_RE = re.compile(r"[a-z0-9]+")
+
+
 def tokenize(text: str) -> set[str]:
     # Normalize common compound terms and expand legal semantics
     normalized = text.lower().replace("seatbelt", "seat belt safety belt").replace("challans", "challan")
-    words = re.findall(r"\w+", normalized)
-    tokens = {w for w in words if len(w) > 2}
+    # Drop bare years (1988, 2019, 2023): they match every amended act title.
+    normalized = YEAR_RE.sub(" ", normalized)
+    words = WORD_RE.findall(normalized)
+    tokens = {w for w in words if len(w) > 2 and w not in STOPWORDS}
     for pattern, extra in LEGAL_EXPANSIONS:
         if re.search(pattern, normalized):
             tokens.update(extra)
     return tokens
+
+
+# Intent families. The engine must not hand a citizen criminal statutes for a
+# consumer complaint, or MVA rules for an RTI question, just because the words
+# "phone"/"case"/"section" appear somewhere. When exactly one family matches,
+# evidence outside that family is discarded.
+INTENT_PATTERNS = {
+    "traffic": re.compile(
+        r"\b(?:helmet|seatbelt|safety belt|traffic|challan|challans|speed|overspeed|"
+        r"license|licence|driving|driver|vehicle|bike|scooter|motorcycle|car|motor|"
+        r"puc|pollution|e-?challan|accident|crash|hit and run|parking|drunk|drunken|"
+        r"alcohol|red light|signal|over speed|insurance policy|highway|red light jumping)\b"
+    ),
+    "consumer": re.compile(
+        r"\b(?:consumer|refund|defective|warranty|guarantee|unfair trade|seller|"
+        r"e-?daakhil|invoice|bought|purchased|purchase|purchases|deliver|delivery|"
+        r"shop|store|e-?commerce)\b"
+    ),
+    "rti": re.compile(r"\b(?:rti|right to information|cpio|first appeal|pio)\b"),
+    "criminal": re.compile(
+        r"\b(?:police|arrest|bail|fir|cognizable|warrant|custody|lockup|lock-up|"
+        r"interrogation|theft|stolen|cheating|fraud|conspiracy|assault|attack|murder|"
+        r"hurt|grievous|domestic violence|498a|dowry|kidnapping|rape|pocso|trespass|"
+        r"criminal intimidation|criminal breach of trust)\b"
+    ),
+    "lsa": re.compile(r"\b(?:legal aid|nalsa|tele-?law|14454)\b"),
+}
+
+ACT_FAMILY_FRAGMENTS = (
+    ("traffic", "Motor Vehicles Act"),
+    ("consumer", "Consumer Protection Act"),
+    ("rti", "Right to Information Act"),
+    ("criminal", "BNS"),
+    ("criminal", "BNSS"),
+    ("criminal", "BSA"),
+    ("lsa", "Legal Services Authorities Act"),
+)
+
+
+def detect_intent_families(text: str):
+    families = set()
+    for family, pattern in INTENT_PATTERNS.items():
+        if pattern.search(text):
+            families.add(family)
+    return families
+
+
+def chunk_family(act_name: str) -> str:
+    for family, fragment in ACT_FAMILY_FRAGMENTS:
+        if fragment in act_name:
+            return family
+    return "other"
+
+
+# A candidate only survives when the query shows real topical overlap with
+# the chunk. Without this gate every question (even off-topic ones) retrieved
+# the "best of five" chunks and the answer presented them as if they applied.
+MIN_KEYWORD_MATCHES = 2
+
 
 class RAGService:
     def retrieve_top_chunks(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
@@ -100,6 +204,7 @@ class RAGService:
         query_vec = np.array(gemini_service.get_embedding(retrieval_text), dtype=np.float32)
         norm_q = np.linalg.norm(query_vec)
         q_tokens = tokenize(retrieval_text)
+        families = detect_intent_families(retrieval_text)
 
         # Extract explicit section mentions if any (e.g. "section 184", "41A")
         sec_mentions = re.findall(r"(?:section|sec\.?|धारा|धारा)\s*(\d+[a-z]?)", retrieval_text.lower())
@@ -112,7 +217,7 @@ class RAGService:
 
             for r in rows:
                 content_text = f"{r['act_name']} {r['section_number']} {r['title']} {r['content']}".lower()
-                
+
                 # 1. Cosine similarity
                 cosine_sim = 0.0
                 if norm_q > 0:
@@ -123,8 +228,9 @@ class RAGService:
 
                 # 2. Lexical keyword overlap score
                 chunk_tokens = tokenize(content_text)
-                overlap = len(q_tokens.intersection(chunk_tokens))
-                lexical_score = (overlap / (len(q_tokens) + 1e-5)) if q_tokens else 0.0
+                overlap = q_tokens.intersection(chunk_tokens)
+                match_count = len(overlap)
+                lexical_score = (match_count / (len(q_tokens) + 1e-5)) if q_tokens else 0.0
 
                 # 3. Direct statutory section boost
                 section_boost = 0.0
@@ -132,6 +238,24 @@ class RAGService:
                 for s in sec_mentions:
                     if s in chunk_sec_lower:
                         section_boost += 1.0
+
+                # 4. Intent-family filter: never hand a citizen the wrong statute
+                # family for the question they actually asked.
+                if families and section_boost <= 0:
+                    family = chunk_family(r["act_name"])
+                    if family != "other" and family not in families:
+                        continue
+
+                # 5. Relevance gate: do not present laws the query does not touch.
+                if section_boost > 0:
+                    pass
+                elif len(q_tokens) <= 1:
+                    # Single-topic query: a single textual hit is enough, because
+                    # the word itself carries the topic (e.g. "helmet", "murder").
+                    if match_count < 1:
+                        continue
+                elif match_count < MIN_KEYWORD_MATCHES:
+                    continue
 
                 # Combined Hybrid Score
                 total_score = (0.45 * cosine_sim) + (0.55 * lexical_score) + section_boost
@@ -165,7 +289,13 @@ class RAGService:
 
         citations: List[Citation] = []
         context_parts = []
-        
+
+        # 1b. Nothing relevant survived the grounding gate. Answer honestly
+        # instead of inventing/invoking unrelated statutes.
+        if not top_chunks:
+            templates = get_templates(target_lang)
+            return str(templates["no_sources"]), citations
+
         for idx, chunk in enumerate(top_chunks):
             context_parts.append(
                 f"[Source {idx+1}]: {chunk['act_name']} - {chunk['section_number']}: {chunk['title']}\n{chunk['content']}"

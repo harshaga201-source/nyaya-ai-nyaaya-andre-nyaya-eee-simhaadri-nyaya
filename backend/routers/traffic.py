@@ -1,7 +1,6 @@
 import logging
 from fastapi import APIRouter, HTTPException
 from backend.models.schemas import TrafficDisputeRequest, TrafficDisputeResponse
-from backend.services.rag_service import rag_service
 from backend.services.gemini_service import gemini_service
 from backend.config import settings
 
@@ -32,31 +31,38 @@ def traffic_dispute_endpoint(request: TrafficDisputeRequest):
     """
     violation_lower = request.violation_charged.lower()
     section_lower = request.section_charged.lower()
-    
-    # 1. RAG retrieval for relevant Motor Vehicles Act sections
-    rag_chunks = rag_service.retrieve_top_chunks(f"Motor Vehicles Act {request.section_charged} {request.violation_charged}", top_k=3)
-    
-    # 2. Check section match
-    section_matches = False
-    for keyword, expected_sections in SECTION_MATCH_MAP.items():
-        if keyword in violation_lower:
-            for s in expected_sections:
-                if s in section_lower:
-                    section_matches = True
-                    break
-        if section_matches:
-            break
-            
-    # If the user inputted e.g. "Section 183" for speeding, it matches.
-    if not section_matches and any(k in section_lower for k in ["112", "183", "129", "194", "184", "185", "181", "196", "190"]):
-        section_matches = True
 
-    section_analysis = (
-        f"Statutory Review: The violation '{request.violation_charged}' is evaluated under {request.section_charged}. "
-        + ("The cited section correctly corresponds to the statutory offence under the Motor Vehicles Act, 1988 (as amended)."
-           if section_matches else
-           f"Discrepancy Detected: The cited section '{request.section_charged}' may not align with the standard provision for '{request.violation_charged}'. This mismatch provides strong grounds for contestation under Section 208.")
-    )
+    # 2. Check section match only when we recognise the violation. An unknown
+    # violation can never be "matched" just because any known section number was typed.
+    identified_violations = [
+        (keyword, expected)
+        for keyword, expected in SECTION_MATCH_MAP.items()
+        if keyword in violation_lower
+    ]
+    section_matches = False
+    if identified_violations:
+        section_matches = any(
+            section in section_lower
+            for _, expected_sections in identified_violations
+            for section in expected_sections
+        )
+    violation_recognised = bool(identified_violations)
+
+    if not violation_recognised:
+        section_analysis = (
+            f"Statutory Review: '{request.violation_charged}' is not a violation we can auto-verify against the Motor Vehicles Act database. "
+            f"The cited provision {request.section_charged} may still apply — please confirm the exact section and fine amount on the official e-Challan portal (echallan.parivahan.gov.in) or with the Virtual Court before paying or contesting."
+        )
+    elif section_matches:
+        section_analysis = (
+            f"Statutory Review: The violation '{request.violation_charged}' is evaluated under {request.section_charged}. "
+            "The cited section correctly corresponds to the statutory offence under the Motor Vehicles Act, 1988 (as amended)."
+        )
+    else:
+        section_analysis = (
+            f"Statutory Review: The violation '{request.violation_charged}' is evaluated under {request.section_charged}. "
+            f"Discrepancy Detected: The cited section '{request.section_charged}' may not align with the standard provision for '{request.violation_charged}'. This mismatch provides strong grounds for contestation under Section 208."
+        )
 
     # 3. User Options
     options = [
@@ -113,7 +119,8 @@ Place: {request.place or '[Place]'}
     # 5. Draft Contest Letter in Chosen Language
     target_lang_name = settings.LANGUAGE_NAMES.get(request.language, "English")
     if request.language != "en":
-        prompt = f"""
+        if gemini_service.is_available:
+            prompt = f"""
 Translate the following formal Indian legal traffic challan contest letter into {target_lang_name}.
 Keep statutory references in English inside brackets (e.g. "[Motor Vehicles Act, Section 208]").
 Preserve all bracketed user placeholders like [ENTER VEHICLE REGISTRATION NUMBER].
@@ -121,7 +128,18 @@ Preserve all bracketed user placeholders like [ENTER VEHICLE REGISTRATION NUMBER
 Letter to translate:
 {draft_english}
 """
-        draft_target = gemini_service.generate_text(prompt)
+            draft_target = gemini_service.generate_text(prompt)
+            if not draft_target or len(draft_target) < max(200, int(len(draft_english) * 0.4)):
+                draft_target = (
+                    f"[Translation could not be produced — English letter follows]\n\n{draft_english}"
+                )
+        else:
+            # The offline engine cannot faithfully translate this letter. Showing
+            # the English original is honest; a fake "translated" template is not.
+            draft_target = (
+                f"[Translation unavailable offline — showing the English contest letter ({request.language}) requested]\n\n"
+                f"{draft_english}"
+            )
     else:
         draft_target = draft_english
 

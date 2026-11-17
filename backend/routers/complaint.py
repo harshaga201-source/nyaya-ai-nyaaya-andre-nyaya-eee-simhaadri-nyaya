@@ -176,8 +176,12 @@ Signature of Applicant:
 def draft_complaint_endpoint(request: ComplaintDraftRequest):
     complaint_type = request.complaint_type.lower()
     if complaint_type not in COMPLAINT_TEMPLATES:
-        complaint_type = "police_fir"
-        
+        known = ", ".join(sorted(COMPLAINT_TEMPLATES))
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown complaint type '{request.complaint_type}'. Use one of: {known}.",
+        )
+
     cfg = COMPLAINT_TEMPLATES[complaint_type]
     formatted = cfg["template"].format(
         complainant_name=request.complainant_name,
@@ -193,7 +197,8 @@ def draft_complaint_endpoint(request: ComplaintDraftRequest):
     # If target language is not English, generate a translated copy or bilingual draft
     if request.language != "en":
         target_lang_name = settings.LANGUAGE_NAMES.get(request.language, "English")
-        prompt = f"""
+        if gemini_service.is_available:
+            prompt = f"""
 Translate this formal legal application/complaint into {target_lang_name}.
 Keep Act names and Section numbers in English inside brackets (e.g. "[Right to Information Act, Section 6(1)]").
 Keep all personal details and bracketed placeholders intact.
@@ -201,7 +206,16 @@ Keep all personal details and bracketed placeholders intact.
 Draft:
 {formatted}
 """
-        translated_draft = gemini_service.generate_text(prompt)
+            translated_draft = gemini_service.generate_text(prompt)
+            if not translated_draft or len(translated_draft) < max(200, int(len(formatted) * 0.4)):
+                translated_draft = (
+                    f"[Translation could not be produced — English draft follows]\n\n{formatted}"
+                )
+        else:
+            # Offline engines cannot faithfully translate a full legal application.
+            translated_draft = (
+                f"[Translation unavailable offline — {target_lang_name} requested; English draft follows]\n\n{formatted}"
+            )
         final_draft = f"=== {cfg['title'].upper()} ({target_lang_name}) ===\n\n{translated_draft}\n\n============================\n=== ENGLISH ORIGINAL DRAFT ===\n============================\n\n{formatted}"
     else:
         final_draft = formatted

@@ -58,6 +58,11 @@ class GeminiService:
             except Exception as e:
                 logger.warning(f"Could not initialize GenAI client: {e}. Fallback enabled.")
 
+    @property
+    def is_available(self) -> bool:
+        """True when a real Gemini client is configured (and was initialisable)."""
+        return self.client is not None
+
     def get_embedding(self, text: str) -> List[float]:
         """Generate embedding vector using Gemini API or fallback vectorizer."""
         if self.client:

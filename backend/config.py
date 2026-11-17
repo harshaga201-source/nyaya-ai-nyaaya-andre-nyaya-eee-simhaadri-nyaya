@@ -1,9 +1,14 @@
 import os
 from pathlib import Path
 from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
+
+# Load backend/.env if present so a configured Gemini API key is used. The file
+# is gitignored and never committed.
+load_dotenv(BASE_DIR / ".env")
 DATA_LAWS_DIR = PROJECT_ROOT / "data" / "laws"
 DB_PATH = BASE_DIR / "nyayasathi.db"
 LAWYERS_SEED_PATH = BASE_DIR / "data" / "lawyers_seed.json"

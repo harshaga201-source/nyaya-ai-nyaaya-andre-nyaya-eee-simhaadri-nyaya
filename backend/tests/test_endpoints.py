@@ -59,6 +59,27 @@ def test_all():
     print("   Instant Latency:", chat_cached_res.response_time_ms, "ms", flush=True)
     assert chat_cached_res.is_cached == True
 
+    # 2b. Grounding Guard: irrelevant questions must be refused, not answered with random sections
+    print("\n--- 2b. Testing RAG Grounding Guard (no random laws) ---", flush=True)
+    oos_req = ChatRequest(message="What are the rules for adoption of a child in India?", language="en", force_refresh=True)
+    oos_res = chat_endpoint(oos_req)
+    print("   Out-of-scope citations:", len(oos_res.citations), flush=True)
+    print("   Out-of-scope answer:", oos_res.answer[:110], "...", flush=True)
+    assert oos_res.citations == []
+    assert "do not cover" in oos_res.answer.lower()
+
+    oos_hi = ChatRequest(message="बच्चे को गोद लेने के नियम क्या हैं?", language="hi", force_refresh=True)
+    oos_hi_res = chat_endpoint(oos_hi)
+    assert oos_hi_res.citations == []
+    assert "कवर नहीं" in oos_hi_res.answer
+
+    purchase_req = ChatRequest(message="I bought a PlayStation and it broke in a week, shop refuses refund", language="en", force_refresh=True)
+    purchase_res = chat_endpoint(purchase_req)
+    print("   Purchase-intent citations:", [f"{c.section}" for c in purchase_res.citations], flush=True)
+    assert purchase_res.citations, "Expected consumer citations for purchase question"
+    assert all("Consumer Protection" in c.act for c in purchase_res.citations), [c.act for c in purchase_res.citations]
+    print("   Grounding guard passed: off-topic refused, consumer intent returns only Consumer Protection Act sections.", flush=True)
+
     # 3. Emergency Detection Layer
     print("\n--- 3. Testing Emergency Safety Layer ---", flush=True)
     emerg_req = ChatRequest(message="My friend was arrested and beaten in police lockup", language="en")

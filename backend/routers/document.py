@@ -67,8 +67,10 @@ async def analyze_document_endpoint(
             except Exception as pe:
                 logger.warning(f"Could not parse Gemini JSON response: {pe}")
 
-        # 3. Fallback text extraction if PDF
+        # 3. Offline / no-model fallback: read what we can and be explicit about
+        # the limits instead of inventing a confident-sounding verdict.
         text_content = ""
+        extraction_ok = False
         if "pdf" in mime_type.lower():
             try:
                 import io
@@ -76,34 +78,72 @@ async def analyze_document_endpoint(
                 reader = PdfReader(io.BytesIO(file_bytes))
                 for page in reader.pages[:3]:
                     text_content += page.extract_text() or ""
+                extraction_ok = bool(text_content.strip())
             except Exception as pe:
                 logger.warning(f"PDF extraction failed: {pe}")
 
-        # Intelligent structured fallback based on extracted or simulated legal document
+        lowered = text_content.lower()
         detected_sections = re.findall(r"(?:Section|Sec\.?|धारा)\s*(\d+[A-Z]?)", text_content, re.IGNORECASE)
         dates = re.findall(r"\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b", text_content)
         amounts = re.findall(r"(?:Rs\.?|₹|INR)\s*[\d,]+", text_content)
 
+        if extraction_ok:
+            if any(k in lowered for k in ("challan", "vehicle", "traffic")):
+                document_type = "Traffic Challan / Notice"
+            elif any(k in lowered for k in ("summon", "court", "magistrate")):
+                document_type = "Court Notice / Summons"
+            elif "rti" in lowered or "right to information" in lowered:
+                document_type = "RTI Reply / Information Disclosure"
+            elif "fir" in lowered or "police" in lowered:
+                document_type = "Police Notice / FIR Related Notice"
+            else:
+                document_type = "Legal Notice / Document"
+
+            sections_cited = (
+                [f"Section {s}" for s in set(detected_sections)]
+                if detected_sections
+                else ["No statutory section could be identified automatically — verify against the document itself"]
+            )
+            return DocumentAnalysisResponse(
+                document_type=document_type,
+                parties=["Issuing Authority / Court / Police", "Notice Recipient / Addressee"],
+                key_dates_and_amounts=(dates + amounts) if (dates or amounts) else [
+                    "Not auto-detected — review the document for any reply/appearance deadlines"
+                ],
+                sections_cited=sections_cited,
+                plain_meaning=(
+                    "This is an official communication requesting compliance or appearance. The text was "
+                    "extracted automatically, so verify every detail (dates, vehicle/account numbers, amounts, "
+                    "and sections cited) against the original document before acting. It does not replace a "
+                    "lawyer's review of the actual document."
+                ),
+                action_items_and_deadlines=[
+                    "Carefully verify all details (dates, vehicle/account numbers, allegations, sections cited).",
+                    "Gather documentary evidence (receipts, dashcam, valid PUC/licence, payment receipts).",
+                    "Respond before the deadline shown in the document (typically 15-30 days), online or in writing.",
+                    "If contesting, schedule a consultation with a verified advocate or call Tele-Law (14454)."
+                ],
+                language=language
+            )
+
+        # Nothing legible was extracted (scanned PDF or a photo of a document).
+        # Say so plainly rather than fabricate an analysis.
         return DocumentAnalysisResponse(
-            document_type="Legal Notice / Challan Document",
-            parties=["Issuing Authority / Court / Police", "Notice Recipient / Addressee"],
-            key_dates_and_amounts=(dates + amounts) if (dates or amounts) else [
-                "Issue Date: Recent Notice",
-                "Action Deadline: Within 15 to 30 days of service"
-            ],
-            sections_cited=[f"Section {s}" for s in set(detected_sections)] if detected_sections else [
-                "Motor Vehicles Act / BNSS Notice Provision"
-            ],
+            document_type="Document could not be read automatically",
+            parties=["Not identified — document text could not be extracted"],
+            key_dates_and_amounts=["Not detected — check the notice itself for any reply/appearance deadline"],
+            sections_cited=["Not detected — needs a readable PDF/scan or the online engine"],
             plain_meaning=(
-                "This document is an official communication requesting compliance or appearance. "
-                "It notifies the recipient of an alleged violation or request for information. "
-                "Failure to respond within the stipulated window may lead to ex-parte proceedings or compounding penalties."
+                "This file could not be read automatically. It is likely a scanned image or a photograph of the "
+                "document, which the offline reader cannot interpret. Do not rely on any assumption about its "
+                "contents: contact the issuing authority, or share the original with a verified advocate or "
+                "Tele-Law (14454) for review."
             ),
             action_items_and_deadlines=[
-                "Carefully verify all details (dates, vehicle/account numbers, allegations).",
-                "Gather documentary evidence (receipts, dashcam, valid PUC/licence).",
-                "Respond before the deadline (typically 15-30 days) either online or via written reply.",
-                "If contesting allegations, schedule an appointment with a panel lawyer via Tele-Law (14454)."
+                "Note any deadline printed on the document itself (reply, appearance, or payment date).",
+                "Contact the issuing authority quoting the challan/notice/case number printed on the document.",
+                "Re-upload a clear, text-based PDF copy if possible, or consult a verified advocate about the notice.",
+                "For free legal aid, call Tele-Law on 14454."
             ],
             language=language
         )
