@@ -435,14 +435,11 @@ def _transcribe_with_whisper_cpp(
         if translate_mode and transcript:
             transcript = _render_transcript(transcript, requested or "en")
 
-        # If detection failed entirely, fall back to whisper's own auto mode.
+        # If detection failed entirely, whisper's own auto mode already ran and
+        # its JSON carries the language it chose.
         if requested is None:
-            _run_whisper(executable, model, audio_path, "auto", out_base + "-auto")
-            auto_text = _read_json_text(out_base + "-auto")
-            if auto_text and not transcript:
-                transcript = auto_text
             try:
-                with open(out_base + "-auto.json", "r", encoding="utf-8", errors="replace") as handle:
+                with open(out_base + ".json", "r", encoding="utf-8", errors="replace") as handle:
                     auto_meta = json.load(handle).get("result") or {}
                 auto_lang = normalize_language_code(str(auto_meta.get("language") or ""))
                 if auto_lang in SUPPORTED_LANGUAGES:
