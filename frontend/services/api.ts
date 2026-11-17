@@ -12,9 +12,13 @@ export function getBackendUrl(): string {
 
 const REQUEST_TIMEOUT_MS = 25000;
 
-async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs: number = REQUEST_TIMEOUT_MS
+): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(url, {
       ...options,
@@ -77,12 +81,44 @@ export async function sendChatMessage(payload: ChatPayload): Promise<ChatRespons
   return await res.json();
 }
 
-export async function transcribeAudio(audioBlobOrUri: any, language: string): Promise<string> {
+export interface TranscribeResult {
+  transcript: string;
+  language: string;
+  confidence: number;
+  engine?: string;
+  auto_detected?: boolean;
+  method?: string;
+}
+
+export interface SpeechStatus {
+  server_stt: boolean;
+  engine: string;
+  model?: string | null;
+  gemini?: boolean;
+  local_ready?: boolean;
+  auto_detect: boolean;
+  languages: string[];
+}
+
+export async function getSpeechStatus(): Promise<SpeechStatus> {
+  const baseUrl = getBackendUrl();
+  const res = await fetchWithTimeout(`${baseUrl}/speech/status`, {}, 8000);
+  if (!res.ok) throw new Error('Speech status unavailable.');
+  return await res.json();
+}
+
+export async function transcribeAudio(
+  audioBlobOrUri: any,
+  language: string = 'auto',
+  autoDetect: boolean = true
+): Promise<TranscribeResult> {
   const baseUrl = getBackendUrl();
   const formData = new FormData();
-  
+
   if (Platform.OS === 'web') {
-    formData.append('audio', audioBlobOrUri, 'recording.wav');
+    const isWav =
+      typeof audioBlobOrUri?.type === 'string' && audioBlobOrUri.type.includes('wav');
+    formData.append('audio', audioBlobOrUri, isWav ? 'recording.wav' : 'recording.webm');
   } else {
     formData.append('audio', {
       uri: audioBlobOrUri,
@@ -91,16 +127,27 @@ export async function transcribeAudio(audioBlobOrUri: any, language: string): Pr
     } as any);
   }
   formData.append('language', language);
+  formData.append('auto_detect', autoDetect ? 'true' : 'false');
 
-  const res = await fetchWithTimeout(`${baseUrl}/transcribe`, {
-    method: 'POST',
-    body: formData,
-  });
+  // Local Whisper inference can take longer than a normal chat request on the
+  // first call (model paging in), so allow extra headroom.
+  const res = await fetchWithTimeout(
+    `${baseUrl}/transcribe`,
+    { method: 'POST', body: formData },
+    90000
+  );
   if (!res.ok) {
     throw new Error('Transcription service encountered an error.');
   }
   const data = await res.json();
-  return data.transcript || '';
+  return {
+    transcript: data.transcript || '',
+    language: data.language || language || 'en',
+    confidence: typeof data.confidence === 'number' ? data.confidence : 0,
+    engine: data.engine,
+    auto_detected: !!data.auto_detected,
+    method: data.method,
+  };
 }
 
 export interface DocumentAnalysisData {

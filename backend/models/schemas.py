@@ -33,6 +33,21 @@ class TranscribeResponse(BaseModel):
     transcript: str
     language: str
     confidence: Optional[float] = 1.0
+    engine: Optional[str] = None
+    auto_detected: bool = False
+    method: Optional[str] = None
+
+
+class LanguageDetectRequest(BaseModel):
+    text: str = Field(..., description="Spoken transcript or typed legal question")
+    hint: Optional[str] = Field(None, description="Fallback language code when the text is ambiguous")
+
+
+class LanguageDetectResponse(BaseModel):
+    language: str
+    language_name: str
+    confidence: float
+    method: str
 
 class DocumentAnalysisResponse(BaseModel):
     document_type: str

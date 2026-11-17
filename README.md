@@ -9,7 +9,7 @@ NyayaSathi is a demo-ready, citizen-centric legal awareness platform designed to
 ## 🌟 Key Capabilities
 - **Strictly Grounded RAG Knowledge Base**: Ingests statutory codes from `/data/laws/` (Motor Vehicles Act 1988/2019, Consumer Protection Act 2019, RTI Act 2005, BNSS/CrPC, BNS/IPC, BSA/Evidence Act). Cites `"Act, Section X"` for every claim, includes IPC->BNS and CrPC->BNSS cross-mappings, and never invents sections.
 - **11 Languages Supported**: English, Hindi (हिन्दी), Kannada (ಕನ್ನಡ), Tamil (தமிழ்), Telugu (తెలుగు), Malayalam (മലയാളം), Marathi (मराठी), Bengali (বাংলা), Gujarati (ગુજરાતી), Punjabi (ਪੰਜਾਬੀ), and Urdu (اردو). Persistent language preference storage.
-- **Voice-First Interaction**: Audio recording via `expo-av` and browser `MediaRecorder`, Gemini multimodal audio transcription, editable review box before querying, and native text-to-speech with Indic voice codes (`hi-IN`, `ta-IN`, `te-IN`, `kn-IN`, etc.).
+- **Voice-First Interaction**: Speak in any of the 11 supported languages — NyayaSathi auto-detects the spoken language (`en, hi, ta, te, kn, ml, mr, bn, gu, pa, ur`), switches the whole UI to it, and answers and speaks back in the same language. Audio recording via `expo-av` / browser `MediaRecorder` (16 kHz WAV), local whisper.cpp acoustic language ID, Gemini multimodal transcription when configured, editable review box before querying, and native text-to-speech with Indic voice codes (`hi-IN`, `ta-IN`, `te-IN`, `kn-IN`, etc.).
 - **Privacy-First Document Reader**: Analyze challans, court summons, and contracts using Gemini multimodal with structured extraction (Parties, Dates/Amounts, Sections Cited, Plain Words Meaning, Action Items & Deadlines). Files are processed strictly in-memory and **never stored on disk**.
 - **Traffic Fine Dispute Wizard**: Validates alleged violations against Motor Vehicles Act sections, identifies discrepancies, outlines citizen legal options (Virtual Court, Lok Adalat, Magistrate Court), and produces ready-to-submit bilingual contest letters.
 - **Complaint Generator**: Step-by-step drafting for Police Complaints / Zero FIR requests (Section 173 BNSS), Consumer Commission Complaints (Section 35 CPA 2019), Cyber Crime grievances, and RTI applications. Exportable/printable to PDF (`expo-print`, `expo-sharing`, `window.print`).
@@ -82,7 +82,13 @@ nyayasathi/
    ```bash
    python -m backend.scripts.ingest
    ```
-6. Start the FastAPI backend server:
+6. (Recommended) Install the offline speech engine for automatic spoken-language detection:
+   ```bash
+   python scripts/setup_speech.py
+   ```
+   Downloads the `whisper.cpp` Windows binary and the multilingual `small` model into `backend/tools/whisper` (git-ignored, ~620 MB). The small `base` model is used for a fast (~1 s) acoustic language-ID pass; the `small` model then transcribes in the detected language. Set `WHISPER_CPP_MODEL` to use a different model. Without this step voice still works through the browser recognizer, and `GET /speech/status` reports `engine: "none"`.
+
+7. Start the FastAPI backend server:
    ```bash
    python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
    ```

@@ -20,6 +20,11 @@ import { CacheBadge } from '../../components/CacheBadge';
 import { EmergencyBanner } from '../../components/EmergencyBanner';
 import { speakLegalText, stopLegalSpeech, getSpeechLanguageCode } from '../../components/VoiceSpeech';
 import { sendChatMessage, submitFeedback, CitationItem, EmergencyPayload } from '../../services/api';
+import {
+  detectLanguageFromText,
+  pickRecognitionLanguage,
+  SUPPORTED_LANGUAGE_CODES,
+} from '../../services/languageDetect';
 
 interface Message {
   id: string;
@@ -68,10 +73,12 @@ export default function ChatScreen() {
     );
   }, [language]);
 
-  const handleSend = async (overrideText?: string) => {
+  const handleSend = async (overrideText?: string, languageOverride?: string) => {
     const raw = typeof overrideText === 'string' ? overrideText : inputText;
     const q = raw.trim();
     if (!q || loading) return;
+
+    const targetLanguage = languageOverride || language;
 
     setErrorMessage(null);
     const userMsgId = `user-${Date.now()}`;
@@ -88,7 +95,7 @@ export default function ChatScreen() {
     try {
       const res = await sendChatMessage({
         message: q,
-        language: language,
+        language: targetLanguage,
         session_id: 'nyayasathi-session-1',
       });
 
@@ -131,7 +138,7 @@ export default function ChatScreen() {
 
       try {
         const rec = new SpeechRec();
-        rec.lang = getSpeechLanguageCode(language);
+        rec.lang = pickRecognitionLanguage(language);
         rec.interimResults = false;
         rec.maxAlternatives = 1;
 
@@ -143,7 +150,15 @@ export default function ChatScreen() {
           if (speech && speech.trim()) {
             captured = true;
             setIsVoiceListening(false);
-            handleSend(speech.trim());
+            // Follow the language actually spoken instead of the picked UI one.
+            const detection = detectLanguageFromText(speech.trim(), language);
+            const target =
+              detection.confidence >= 0.55 &&
+              SUPPORTED_LANGUAGE_CODES.includes(detection.language)
+                ? detection.language
+                : language;
+            if (target !== language) setLanguage(target);
+            handleSend(speech.trim(), target);
           }
         };
         rec.onerror = (e: any) => {

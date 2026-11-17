@@ -19,7 +19,89 @@ import { CitationChips } from '../../components/CitationChip';
 import { CacheBadge } from '../../components/CacheBadge';
 import { EmergencyBanner } from '../../components/EmergencyBanner';
 import { speakLegalText, stopLegalSpeech, getSpeechLanguageCode } from '../../components/VoiceSpeech';
-import { transcribeAudio, sendChatMessage, ChatResponseData } from '../../services/api';
+import {
+  transcribeAudio,
+  sendChatMessage,
+  getSpeechStatus,
+  ChatResponseData,
+  SpeechStatus,
+} from '../../services/api';
+import {
+  detectLanguageFromText,
+  pickRecognitionLanguage,
+  languageNativeName,
+  SUPPORTED_LANGUAGE_CODES,
+} from '../../services/languageDetect';
+
+interface WavCapture {
+  context: any;
+  stream: any;
+  source: any;
+  processor: any;
+  chunks: Float32Array[];
+  sampleRate: number;
+}
+
+function mergeChunks(chunks: Float32Array[]): Float32Array {
+  const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const merged = new Float32Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return merged;
+}
+
+function resampleLinear(input: Float32Array, fromRate: number, toRate: number): Float32Array {
+  if (!fromRate || !toRate || fromRate === toRate) return input;
+  const ratio = fromRate / toRate;
+  const length = Math.max(1, Math.floor(input.length / ratio));
+  const output = new Float32Array(length);
+  for (let i = 0; i < length; i += 1) {
+    const position = i * ratio;
+    const index = Math.floor(position);
+    const fraction = position - index;
+    const a = input[index] ?? 0;
+    const b = input[index + 1] ?? a;
+    output[i] = a + (b - a) * fraction;
+  }
+  return output;
+}
+
+function encodeWavBlob(chunks: Float32Array[], sourceRate: number): Blob {
+  const merged = mergeChunks(chunks);
+  const pcm = resampleLinear(merged, sourceRate, 16000);
+  const buffer = new ArrayBuffer(44 + pcm.length * 2);
+  const view = new DataView(buffer);
+  const writeString = (offset: number, value: string) => {
+    for (let i = 0; i < value.length; i += 1) {
+      view.setUint8(offset + i, value.charCodeAt(i));
+    }
+  };
+
+  writeString(0, 'RIFF');
+  view.setUint32(4, 36 + pcm.length * 2, true);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, 16000, true);
+  view.setUint32(28, 16000 * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(36, 'data');
+  view.setUint32(40, pcm.length * 2, true);
+
+  let offset = 44;
+  for (let i = 0; i < pcm.length; i += 1) {
+    const sample = Math.max(-1, Math.min(1, pcm[i]));
+    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+    offset += 2;
+  }
+  return new Blob([view], { type: 'audio/wav' });
+}
 
 export default function VoiceScreen() {
   const { language, setLanguage } = useContext(LanguageContext);
@@ -31,23 +113,47 @@ export default function VoiceScreen() {
   const [transcript, setTranscript] = useState('');
   const transcriptRef = useRef('');
 
+  const [autoDetect, setAutoDetect] = useState(true);
+  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
+  const [speechStatus, setSpeechStatus] = useState<SpeechStatus | null>(null);
+  const [answerLanguage, setAnswerLanguage] = useState(language);
+
   // Keep state and ref in sync
   const updateTranscript = (val: string) => {
     transcriptRef.current = val;
     setTranscript(val);
   };
-  
-  // Web MediaRecorder & SpeechRecognition references
+
+  // Web MediaRecorder, WAV capture & SpeechRecognition references
   const webMediaRecorderRef = useRef<any>(null);
   const webStreamRef = useRef<any>(null);
   const webAudioChunksRef = useRef<Blob[]>([]);
   const webRecognitionRef = useRef<any>(null);
-  const captureModeRef = useRef<'recognition' | 'recorder' | null>(null);
+  const wavCaptureRef = useRef<WavCapture | null>(null);
+  const captureModeRef = useRef<'recognition' | 'recorder' | 'wav' | null>(null);
+  const recordTimeoutRef = useRef<any>(null);
 
   const [loadingAnswer, setLoadingAnswer] = useState(false);
   const [answerData, setAnswerData] = useState<ChatResponseData | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  // Discover whether the backend can transcribe audio itself. When it can,
+  // voice input is recorded as WAV and Whisper identifies the language
+  // acoustically - no manual language choice needed.
+  useEffect(() => {
+    let active = true;
+    getSpeechStatus()
+      .then((status) => {
+        if (active) setSpeechStatus(status);
+      })
+      .catch(() => {
+        if (active) setSpeechStatus(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Stop any active web capture when leaving the screen.
   useEffect(() => {
@@ -65,10 +171,22 @@ export default function VoiceScreen() {
       webMediaRecorderRef.current = null;
 
       try {
+        const capture = wavCaptureRef.current;
+        if (capture) {
+          capture.processor.onaudioprocess = null;
+          capture.processor.disconnect?.();
+          capture.source.disconnect?.();
+          capture.context.close?.();
+        }
+      } catch (e) {}
+      wavCaptureRef.current = null;
+
+      try {
         webStreamRef.current?.getTracks().forEach((track: any) => track.stop());
       } catch (e) {}
       webStreamRef.current = null;
 
+      if (recordTimeoutRef.current) clearTimeout(recordTimeoutRef.current);
       stopLegalSpeech();
     };
   }, []);
@@ -85,6 +203,173 @@ export default function VoiceScreen() {
     setStatusMessage(messages[code || ''] || t.stVoiceIncomplete);
   };
 
+  const applyDetectedLanguage = (code: string, announce: boolean = true) => {
+    if (!code || !SUPPORTED_LANGUAGE_CODES.includes(code)) return;
+    setDetectedLanguage(code);
+    setAnswerLanguage(code);
+    // The whole app follows the spoken language: labels, answer, TTS.
+    if (code !== language) setLanguage(code);
+    if (announce) {
+      setStatusMessage(`${t.autoDetected}: ${languageNativeName(code)}`);
+    }
+  };
+
+  const startWavCapture = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setStatusMessage(t.stUnsupported);
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+      });
+      const AudioCtx =
+        typeof window !== 'undefined' &&
+        ((window as any).AudioContext || (window as any).webkitAudioContext);
+      if (!AudioCtx) {
+        stream.getTracks().forEach((track: any) => track.stop());
+        setStatusMessage(t.stUnsupported);
+        return;
+      }
+
+      const context = new AudioCtx({ sampleRate: 16000 });
+      const source = context.createMediaStreamSource(stream);
+      const processor = context.createScriptProcessor(4096, 1, 1);
+      const chunks: Float32Array[] = [];
+
+      processor.onaudioprocess = (event: any) => {
+        const data = event.inputBuffer.getChannelData(0);
+        chunks.push(new Float32Array(data));
+      };
+      source.connect(processor);
+      processor.connect(context.destination);
+
+      wavCaptureRef.current = {
+        context,
+        stream,
+        source,
+        processor,
+        chunks,
+        sampleRate: context.sampleRate || 16000,
+      };
+      captureModeRef.current = 'wav';
+      setIsRecording(true);
+      setStatusMessage(t.stListening);
+
+      // Safety stop so a forgotten recording cannot upload forever.
+      recordTimeoutRef.current = setTimeout(() => {
+        if (wavCaptureRef.current) stopWavCapture();
+      }, 30000);
+    } catch (err: any) {
+      console.warn('Microphone/WAV capture failed:', err);
+      setStatusMessage(
+        err?.name === 'NotAllowedError' ? t.stPermissionDenied : t.stMicStartFail
+      );
+    }
+  };
+
+  const stopWavCapture = async () => {
+    const capture = wavCaptureRef.current;
+    if (!capture) return;
+    wavCaptureRef.current = null;
+    captureModeRef.current = null;
+    if (recordTimeoutRef.current) {
+      clearTimeout(recordTimeoutRef.current);
+      recordTimeoutRef.current = null;
+    }
+
+    try {
+      capture.processor.onaudioprocess = null;
+      capture.processor.disconnect?.();
+      capture.source.disconnect?.();
+      capture.stream.getTracks().forEach((track: any) => track.stop());
+      await capture.context.close?.();
+    } catch (e) {}
+
+    setIsRecording(false);
+    const blob = encodeWavBlob(capture.chunks, capture.sampleRate);
+    if (blob.size <= 44) {
+      setStatusMessage(t.stNoAudio);
+      return;
+    }
+    await handleAudioTranscription(blob);
+  };
+
+  // Browser recognition: used on native, or when the backend has no STT
+  // engine. Recognition language follows the device language when possible and
+  // the transcript itself is inspected afterwards, so a mismatch still
+  // resolves to the language the citizen actually spoke.
+  const startBrowserRecognition = () => {
+    const SpeechRecognition =
+      typeof window !== 'undefined' &&
+      ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+
+    if (!SpeechRecognition) {
+      setStatusMessage(t.stUnsupported);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = autoDetect
+        ? pickRecognitionLanguage(language)
+        : getSpeechLanguageCode(language);
+      recognition.interimResults = true;
+      recognition.continuous = false;
+      let errored = false;
+
+      recognition.onstart = () => {
+        setIsRecording(true);
+        setStatusMessage(t.stListening);
+      };
+
+      recognition.onresult = (event: any) => {
+        let combined = '';
+        for (let i = 0; i < event.results.length; i++) {
+          combined += event.results[i][0].transcript;
+        }
+        if (combined.trim()) {
+          updateTranscript(combined.trim());
+          setStatusMessage(t.stHearingPrefix + combined.trim());
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.log('Web speech error:', event.error);
+        errored = true;
+        captureModeRef.current = null;
+        setIsRecording(false);
+        setSpeechError(event.error);
+      };
+
+      recognition.onend = () => {
+        captureModeRef.current = null;
+        setIsRecording(false);
+        webRecognitionRef.current = null;
+        if (errored) return;
+        const captured = transcriptRef.current.trim();
+        if (captured) {
+          if (autoDetect) {
+            const detection = detectLanguageFromText(captured, language);
+            applyDetectedLanguage(detection.language);
+          } else {
+            setStatusMessage(t.stCaptured);
+          }
+        } else {
+          setStatusMessage(t.stNoSpeechDetected);
+        }
+      };
+
+      recognition.start();
+      webRecognitionRef.current = recognition;
+      captureModeRef.current = 'recognition';
+    } catch (e) {
+      console.warn('SpeechRecognition could not start:', e);
+      setStatusMessage(t.stRecStartFail);
+    }
+  };
+
   // Start Recording
   const startRecording = async () => {
     if (isRecording) return;
@@ -92,116 +377,12 @@ export default function VoiceScreen() {
     setAnswerData(null);
 
     if (Platform.OS === 'web') {
-      // Preferred path: the browser's own speech recognizer gives real speech-to-text
-      // without needing a Gemini key. It fills the review box and never auto-sends.
-      const SpeechRecognition =
-        typeof window !== 'undefined' &&
-        ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
-
-      if (SpeechRecognition) {
-        try {
-          const recognition = new SpeechRecognition();
-          recognition.lang = getSpeechLanguageCode(language);
-          recognition.interimResults = true;
-          recognition.continuous = false;
-          let errored = false;
-
-          recognition.onstart = () => {
-            setIsRecording(true);
-            setStatusMessage(t.stListening);
-          };
-
-          recognition.onresult = (event: any) => {
-            let combined = '';
-            for (let i = 0; i < event.results.length; i++) {
-              combined += event.results[i][0].transcript;
-            }
-            if (combined.trim()) {
-              updateTranscript(combined.trim());
-              setStatusMessage(t.stHearingPrefix + combined.trim());
-            }
-          };
-
-          recognition.onerror = (event: any) => {
-            console.log('Web speech error:', event.error);
-            errored = true;
-            captureModeRef.current = null;
-            setIsRecording(false);
-            setSpeechError(event.error);
-          };
-
-          recognition.onend = () => {
-            captureModeRef.current = null;
-            setIsRecording(false);
-            webRecognitionRef.current = null;
-            if (errored) return;
-            if (transcriptRef.current.trim()) {
-              setStatusMessage(t.stCaptured);
-            } else {
-              setStatusMessage(t.stNoSpeechDetected);
-            }
-          };
-
-          recognition.start();
-          webRecognitionRef.current = recognition;
-          captureModeRef.current = 'recognition';
-          return;
-        } catch (e) {
-          console.warn('SpeechRecognition could not start:', e);
-          setStatusMessage(t.stRecStartFail);
-          return;
-        }
+      // Preferred path: record WAV and let the server identify the language.
+      if (autoDetect && speechStatus?.server_stt) {
+        await startWavCapture();
+        return;
       }
-
-      // Secondary path: record audio and send it to the backend /transcribe endpoint.
-      try {
-        if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-          setStatusMessage(t.stUnsupported);
-          return;
-        }
-
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        webStreamRef.current = stream;
-        const recorder = new MediaRecorder(stream);
-        webAudioChunksRef.current = [];
-
-        recorder.ondataavailable = (event: any) => {
-          if (event.data && event.data.size > 0) {
-            webAudioChunksRef.current.push(event.data);
-          }
-        };
-
-        recorder.onstop = async () => {
-          const chunks = webAudioChunksRef.current;
-          webAudioChunksRef.current = [];
-          const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-
-          try {
-            webStreamRef.current?.getTracks().forEach((track: any) => track.stop());
-          } catch (e) {}
-          webStreamRef.current = null;
-          webMediaRecorderRef.current = null;
-          captureModeRef.current = null;
-          setIsRecording(false);
-
-          if (blob.size > 0) {
-            await handleAudioTranscription(blob);
-          } else {
-            setStatusMessage(t.stNoAudio);
-          }
-        };
-
-        recorder.start();
-        webMediaRecorderRef.current = recorder;
-        captureModeRef.current = 'recorder';
-        setIsRecording(true);
-        setStatusMessage(t.stRecording);
-      } catch (err: any) {
-        console.warn('Microphone/MediaRecorder failed:', err);
-        setStatusMessage(
-          err?.name === 'NotAllowedError' ? t.stPermissionDenied : t.stMicStartFail
-        );
-      }
+      startBrowserRecognition();
       return;
     }
 
@@ -233,6 +414,11 @@ export default function VoiceScreen() {
   // Stop Recording
   const stopRecording = async () => {
     if (Platform.OS === 'web') {
+      if (captureModeRef.current === 'wav' && wavCaptureRef.current) {
+        await stopWavCapture();
+        return;
+      }
+
       if (captureModeRef.current === 'recognition' && webRecognitionRef.current) {
         try {
           webRecognitionRef.current.stop();
@@ -275,16 +461,28 @@ export default function VoiceScreen() {
 
   const handleAudioTranscription = async (audioData: any) => {
     setTranscribing(true);
-    setStatusMessage(t.transcribing);
+    setStatusMessage(autoDetect ? t.autoDetecting : t.transcribing);
     try {
-      const text = (await transcribeAudio(audioData, language)) || '';
-      const cleaned = text.trim();
+      const result = await transcribeAudio(
+        audioData,
+        autoDetect ? 'auto' : language,
+        autoDetect
+      );
+      const cleaned = (result.transcript || '').trim();
       if (cleaned) {
         updateTranscript(cleaned);
-        setStatusMessage(t.stTranscribed);
+        if (autoDetect) {
+          const code =
+            result.language && SUPPORTED_LANGUAGE_CODES.includes(result.language)
+              ? result.language
+              : detectLanguageFromText(cleaned, language).language;
+          applyDetectedLanguage(code);
+        } else {
+          setStatusMessage(t.stTranscribed);
+        }
       } else {
         updateTranscript('');
-        setStatusMessage(t.stTranscribeFail);
+        setStatusMessage(result.engine === 'none' ? t.autoUnavailable : t.stTranscribeFail);
       }
     } catch (e: any) {
       console.warn('Transcription failed:', e);
@@ -295,7 +493,7 @@ export default function VoiceScreen() {
     }
   };
 
-  const handleSendQuery = async (queryOverride?: string) => {
+  const handleSendQuery = async (queryOverride?: string, forceLanguage?: string) => {
     const raw = typeof queryOverride === 'string' ? queryOverride : transcriptRef.current;
     const q = (raw || '').trim();
     if (!q) {
@@ -304,13 +502,26 @@ export default function VoiceScreen() {
     }
     if (loadingAnswer) return;
 
+    // Resolve the language from what was actually asked. Typed edits and
+    // spoken input both pass through the same detector.
+    const targetLanguage =
+      forceLanguage ||
+      (autoDetect
+        ? detectLanguageFromText(q, detectedLanguage || language).language
+        : language);
+
     updateTranscript(q);
+    setAnswerLanguage(targetLanguage);
+    if (autoDetect && targetLanguage !== language) {
+      setLanguage(targetLanguage);
+      setDetectedLanguage(targetLanguage);
+    }
     setLoadingAnswer(true);
     setStatusMessage(t.stConsulting);
     try {
       const res = await sendChatMessage({
         message: q,
-        language: language,
+        language: targetLanguage,
         session_id: 'voice-session',
       });
 
@@ -322,9 +533,9 @@ export default function VoiceScreen() {
       setAnswerData(res);
       setStatusMessage(null);
 
-      // Auto speak answer in the selected language
+      // Auto speak answer in the spoken language
       setIsSpeaking(true);
-      speakLegalText(answer, language, () => {
+      speakLegalText(answer, targetLanguage, () => {
         setIsSpeaking(false);
       });
     } catch (err: any) {
@@ -341,7 +552,7 @@ export default function VoiceScreen() {
       setIsSpeaking(false);
     } else {
       setIsSpeaking(true);
-      speakLegalText(answerData.answer, language, () => {
+      speakLegalText(answerData.answer, answerLanguage || language, () => {
         setIsSpeaking(false);
       });
     }
@@ -356,6 +567,32 @@ export default function VoiceScreen() {
         <View style={styles.voiceCard}>
           <Text style={styles.cardHeading}>{t.voiceTitle}</Text>
           <Text style={styles.cardSub}>{t.voiceDesc}</Text>
+
+          {/* Auto language detection */}
+          <View style={styles.autoRow}>
+            <View style={styles.autoCopy}>
+              <Text style={styles.autoTitle}>{t.autoDetectTitle}</Text>
+              <Text style={styles.autoHint}>{t.autoHint}</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.autoToggle, autoDetect && styles.autoToggleOn]}
+              activeOpacity={0.8}
+              onPress={() => {
+                setAutoDetect((value) => !value);
+                setStatusMessage(null);
+              }}
+            >
+              <Text style={styles.autoToggleText}>{autoDetect ? t.autoOn : t.autoOff}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {autoDetect && detectedLanguage && (
+            <View style={styles.detectedBadge}>
+              <Text style={styles.detectedBadgeText}>
+                {t.autoDetected}: {languageNativeName(detectedLanguage)}
+              </Text>
+            </View>
+          )}
 
           {/* Animated Mic Button */}
           <View style={styles.micWrapper}>
@@ -372,6 +609,9 @@ export default function VoiceScreen() {
             <Text style={styles.micInstruction}>
               {isRecording ? t.tapToStop : t.tapToSpeak}
             </Text>
+            {autoDetect && !isRecording && (
+              <Text style={styles.autoAnswering}>{t.autoAnswering}</Text>
+            )}
           </View>
 
           {statusMessage && (
@@ -383,7 +623,9 @@ export default function VoiceScreen() {
           {transcribing && (
             <View style={styles.loadingRow}>
               <ActivityIndicator color={Colors.gold} size="small" />
-              <Text style={styles.loadingLabel}>{t.transcribing}</Text>
+              <Text style={styles.loadingLabel}>
+                {autoDetect ? t.autoDetecting : t.transcribing}
+              </Text>
             </View>
           )}
 
@@ -413,7 +655,7 @@ export default function VoiceScreen() {
               <View style={styles.sampleVoiceGrid}>
                 <TouchableOpacity
                   style={styles.sampleVoiceCard}
-                  onPress={() => handleSendQuery('Can police arrest without warrant?')}
+                  onPress={() => handleSendQuery('Can police arrest without warrant?', language)}
                 >
                   <Text style={styles.sampleVoiceCardIcon}>🚔</Text>
                   <View style={{ flex: 1 }}>
@@ -424,7 +666,7 @@ export default function VoiceScreen() {
 
                 <TouchableOpacity
                   style={styles.sampleVoiceCard}
-                  onPress={() => handleSendQuery('What is Zero FIR and where can I file it?')}
+                  onPress={() => handleSendQuery('What is Zero FIR and where can I file it?', language)}
                 >
                   <Text style={styles.sampleVoiceCardIcon}>📋</Text>
                   <View style={{ flex: 1 }}>
@@ -435,7 +677,7 @@ export default function VoiceScreen() {
 
                 <TouchableOpacity
                   style={styles.sampleVoiceCard}
-                  onPress={() => handleSendQuery('What is the penalty for driving without a helmet under Motor Vehicles Act?')}
+                  onPress={() => handleSendQuery('What is the penalty for driving without a helmet under Motor Vehicles Act?', language)}
                 >
                   <Text style={styles.sampleVoiceCardIcon}>🪖</Text>
                   <View style={{ flex: 1 }}>
@@ -446,7 +688,7 @@ export default function VoiceScreen() {
 
                 <TouchableOpacity
                   style={styles.sampleVoiceCard}
-                  onPress={() => handleSendQuery('Can a store refuse refund for a defective product under Consumer Protection Act?')}
+                  onPress={() => handleSendQuery('Can a store refuse refund for a defective product under Consumer Protection Act?', language)}
                 >
                   <Text style={styles.sampleVoiceCardIcon}>🛍️</Text>
                   <View style={{ flex: 1 }}>
@@ -558,6 +800,66 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: 16,
   },
+  autoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: BORDER_THIN,
+    borderColor: Colors.pitchBlack,
+    padding: 10,
+    backgroundColor: '#F4EFE6',
+    marginBottom: 10,
+  },
+  autoCopy: {
+    flex: 1,
+  },
+  autoTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: Colors.ink,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  autoHint: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: Colors.mutedInk,
+    marginTop: 3,
+    lineHeight: 16,
+  },
+  autoToggle: {
+    minWidth: 64,
+    alignItems: 'center',
+    borderWidth: BORDER_THIN,
+    borderColor: Colors.pitchBlack,
+    backgroundColor: '#FFFDF7',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  autoToggleOn: {
+    backgroundColor: Colors.yellow,
+  },
+  autoToggleText: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: Colors.ink,
+    letterSpacing: 1,
+  },
+  detectedBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: Colors.green,
+    borderWidth: BORDER_THIN,
+    borderColor: Colors.pitchBlack,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginBottom: 8,
+  },
+  detectedBadgeText: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+    fontSize: 12,
+    letterSpacing: 0.5,
+  },
   micWrapper: {
     alignItems: 'center',
     marginVertical: 14,
@@ -596,6 +898,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: BORDER_THIN,
     borderBottomColor: Colors.pitchBlack,
     paddingBottom: 4,
+  },
+  autoAnswering: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.mutedInk,
+    marginTop: 8,
+    letterSpacing: 0.4,
   },
   statusBox: {
     backgroundColor: Colors.yellow,

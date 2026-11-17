@@ -295,6 +295,14 @@ export interface TranslationStrings {
   trViolationDefault: string;
   lwRegLangDefault: string;
   lwRegPracticeDefault: string;
+  autoDetectTitle: string;
+  autoOn: string;
+  autoOff: string;
+  autoHint: string;
+  autoDetected: string;
+  autoDetecting: string;
+  autoUnavailable: string;
+  autoAnswering: string;
 }
 
 export const LANGUAGES = [
@@ -609,6 +617,14 @@ export const TRANSLATIONS: Record<string, TranslationStrings> = {
     trViolationDefault: "Driving without helmet",
     lwRegLangDefault: "English, Hindi",
     lwRegPracticeDefault: "Criminal Law & Bail",
+    autoDetectTitle: "Auto-detect language",
+    autoOn: "ON",
+    autoOff: "OFF",
+    autoHint: "Speak in any of the 11 languages. NyayaSathi detects it and answers in the same language.",
+    autoDetected: "Detected language",
+    autoDetecting: "Detecting spoken language…",
+    autoUnavailable: "Automatic language detection is unavailable on this device. Pick a language above or type your question below.",
+    autoAnswering: "Answering in your spoken language",
   },
   hi: {
     appName: "न्यायसाथी",
@@ -907,6 +923,14 @@ export const TRANSLATIONS: Record<string, TranslationStrings> = {
     trViolationDefault: "बिना हेलमेट के गाड़ी चलाना",
     lwRegLangDefault: "अंग्रेजी, हिंदी",
     lwRegPracticeDefault: "आपराधिक कानून और जमानत",
+    autoDetectTitle: "भाषा स्वतः पहचानें",
+    autoOn: "चालू",
+    autoOff: "बंद",
+    autoHint: "11 भाषाओं में से किसी में भी बोलें। न्यायसाथी भाषा पहचानकर उसी भाषा में उत्तर देगा।",
+    autoDetected: "पहचानी गई भाषा",
+    autoDetecting: "बोली गई भाषा पहचानी जा रही है…",
+    autoUnavailable: "इस डिवाइस पर स्वतः भाषा पहचान उपलब्ध नहीं है। ऊपर से भाषा चुनें या नीचे अपना सवाल लिखें।",
+    autoAnswering: "आपकी बोली गई भाषा में उत्तर",
   },
   kn: {
     appName: "ನ್ಯಾಯಸಾಥಿ",
@@ -1205,6 +1229,14 @@ export const TRANSLATIONS: Record<string, TranslationStrings> = {
     trViolationDefault: "ಹೆಲ್ಮೆಟ್ ಇಲ್ಲದೆ ವಾಹನ ಚಾಲನೆ",
     lwRegLangDefault: "ಇಂಗ್ಲಿಷ್, ಹಿಂದಿ",
     lwRegPracticeDefault: "ಕ್ರಿಮಿನಲ್ ಕಾನೂನು ಮತ್ತು ಜಾಮೀನು",
+    autoDetectTitle: "ಭಾಷೆ ಸ್ವಯಂ ಪತ್ತೆ",
+    autoOn: "ಆನ್",
+    autoOff: "ಆಫ್",
+    autoHint: "11 ಭಾಷೆಗಳಲ್ಲಿ ಯಾವುದಾದರೂ ಮಾತನಾಡಿ. ನ್ಯಾಯಸಾಥಿ ಭಾಷೆ ಪತ್ತೆ ಮಾಡಿ ಅದೇ ಭಾಷೆಯಲ್ಲಿ ಉತ್ತರಿಸುತ್ತದೆ.",
+    autoDetected: "ಪತ್ತೆಯಾದ ಭಾಷೆ",
+    autoDetecting: "ಮಾತನಾಡಿದ ಭಾಷೆ ಪತ್ತೆ ಮಾಡಲಾಗುತ್ತಿದೆ…",
+    autoUnavailable: "ಈ ಸಾಧನದಲ್ಲಿ ಸ್ವಯಂ ಭಾಷೆ ಪತ್ತೆ ಲಭ್ಯವಿಲ್ಲ. ಮೇಲೆ ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ ಅಥವಾ ಕೆಳಗೆ ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಬರೆಯಿರಿ.",
+    autoAnswering: "ನೀವು ಮಾತನಾಡಿದ ಭಾಷೆಯಲ್ಲಿ ಉತ್ತರ",
   },
   ta: {
     appName: "நியாயசாதி",
@@ -1503,6 +1535,14 @@ export const TRANSLATIONS: Record<string, TranslationStrings> = {
     trViolationDefault: "ஹெல்மெட் அணியாமல் வாகனம் ஓட்டுதல்",
     lwRegLangDefault: "ஆங்கிலம், ஹிந்தி",
     lwRegPracticeDefault: "குற்றவியல் சட்டம் & ஜாமீன்",
+    autoDetectTitle: "மொழி தானியங்கி கண்டறிதல்",
+    autoOn: "இயக்கு",
+    autoOff: "நிறுத்து",
+    autoHint: "11 மொழிகளில் எதிலும் பேசுங்கள். நியாயசாதி மொழியைக் கண்டறிந்து அதே மொழியில் பதிலளிக்கும்.",
+    autoDetected: "கண்டறியப்பட்ட மொழி",
+    autoDetecting: "பேசிய மொழி கண்டறியப்படுகிறது…",
+    autoUnavailable: "இந்த சாதனத்தில் தானியங்கி மொழி கண்டறிதல் கிடைக்கவில்லை. மேலே மொழியைத் தேர்ந்தெடுக்கவும் அல்லது கீழே உங்கள் கேள்வியை எழுதவும்.",
+    autoAnswering: "நீங்கள் பேசிய மொழியில் பதில்",
   },
   te: {
     appName: "న్యాయసాథి",
@@ -1801,6 +1841,14 @@ export const TRANSLATIONS: Record<string, TranslationStrings> = {
     trViolationDefault: "హెల్మెట్ లేకుండా డ్రైవింగ్",
     lwRegLangDefault: "ఇంగ్లీష్, హిందీ",
     lwRegPracticeDefault: "క్రిమినల్ లా & బెయిల్",
+    autoDetectTitle: "భాషను స్వయంచాలకంగా గుర్తించండి",
+    autoOn: "ఆన్",
+    autoOff: "ఆఫ్",
+    autoHint: "11 భాషల్లో ఏదైనా మాట్లాడండి. న్యాయసాథి భాషను గుర్తించి అదే భాషలో సమాధానం ఇస్తుంది.",
+    autoDetected: "గుర్తించిన భాష",
+    autoDetecting: "మాట్లాడిన భాషను గుర్తిస్తోంది…",
+    autoUnavailable: "ఈ పరికరంలో స్వయంచాలక భాష గుర్తింపు అందుబాటులో లేదు. పైన భాషను ఎంచుకోండి లేదా క్రింద మీ ప్రశ్నను టైప్ చేయండి.",
+    autoAnswering: "మీరు మాట్లాడిన భాషలో సమాధానం",
   },
   ml: {
     appName: "ന്യായസാഥി",
@@ -2099,6 +2147,14 @@ export const TRANSLATIONS: Record<string, TranslationStrings> = {
     trViolationDefault: "ഹെൽമെറ്റ് ഇല്ലാതെ വാഹനമോടിക്കുന്നു",
     lwRegLangDefault: "ഇംഗ്ലീഷ്, ഹിന്ദി",
     lwRegPracticeDefault: "ക്രിമിനൽ നിയമവും ജാമ്യവും",
+    autoDetectTitle: "ഭാഷ സ്വയം കണ്ടെത്തുക",
+    autoOn: "ഓൺ",
+    autoOff: "ഓഫ്",
+    autoHint: "11 ഭാഷകളിൽ ഏതെങ്കിലും സംസാരിക്കുക. ന്യായസാതി ഭാഷ കണ്ടെത്തി അതേ ഭാഷയിൽ ഉത്തരം നൽകും.",
+    autoDetected: "കണ്ടെത്തിയ ഭാഷ",
+    autoDetecting: "സംസാരിച്ച ഭാഷ കണ്ടെത്തുന്നു…",
+    autoUnavailable: "ഈ ഉപകരണത്തിൽ സ്വയം ഭാഷ കണ്ടെത്തൽ ലഭ്യമല്ല. മുകളിൽ ഭാഷ തിരഞ്ഞെടുക്കുക അല്ലെങ്കിൽ താഴെ നിങ്ങളുടെ ചോദ്യം എഴുതുക.",
+    autoAnswering: "നിങ്ങൾ സംസാരിച്ച ഭാഷയിൽ ഉത്തരം",
   },
   mr: {
     appName: "न्यायसाथी",
@@ -2397,6 +2453,14 @@ export const TRANSLATIONS: Record<string, TranslationStrings> = {
     trViolationDefault: "हेल्मेटशिवाय वाहन चालवणे",
     lwRegLangDefault: "इंग्रजी, हिंदी",
     lwRegPracticeDefault: "फौजदारी कायदा आणि जामीन",
+    autoDetectTitle: "भाषा स्वयं ओळखा",
+    autoOn: "चालू",
+    autoOff: "बंद",
+    autoHint: "11 भाषांपैकी कोणत्याही भाषेत बोला. न्यायसाथी भाषा ओळखून त्याच भाषेत उत्तर देईल.",
+    autoDetected: "ओळखलेली भाषा",
+    autoDetecting: "बोललेली भाषा ओळखत आहे…",
+    autoUnavailable: "या डिव्हाइसवर स्वयंचलित भाषा ओळख उपलब्ध नाही. वरून भाषा निवडा किंवा खाली तुमचा प्रश्न लिहा.",
+    autoAnswering: "तुमच्या बोलल्या भाषेत उत्तर",
   },
   bn: {
     appName: "ন্যায়সাথী",
@@ -2695,6 +2759,14 @@ export const TRANSLATIONS: Record<string, TranslationStrings> = {
     trViolationDefault: "হেলমেট ছাড়া গাড়ি চালানো",
     lwRegLangDefault: "ইংরেজি, হিন্দি",
     lwRegPracticeDefault: "ফৌজদারি আইন ও জামিন",
+    autoDetectTitle: "স্বয়ংক্রিয় ভাষা শনাক্তকরণ",
+    autoOn: "চালু",
+    autoOff: "বন্ধ",
+    autoHint: "১১টি ভাষার যেকোনোটিতে বলুন। ন্যায়সাথী ভাষা শনাক্ত করে সেই ভাষায় উত্তর দেবে।",
+    autoDetected: "শনাক্ত ভাষা",
+    autoDetecting: "বলা ভাষা শনাক্ত করা হচ্ছে…",
+    autoUnavailable: "এই ডিভাইসে স্বয়ংক্রিয় ভাষা শনাক্তকরণ উপলব্ধ নয়। উপরে ভাষা বেছে নিন বা নিচে আপনার প্রশ্ন লিখুন।",
+    autoAnswering: "আপনার বলা ভাষায় উত্তর",
   },
   gu: {
     appName: "ન્યાયસાથી",
@@ -2993,6 +3065,14 @@ export const TRANSLATIONS: Record<string, TranslationStrings> = {
     trViolationDefault: "હેલ્મેટ વગર વાહન ચલાવવું",
     lwRegLangDefault: "અંગ્રેજી, હિન્દી",
     lwRegPracticeDefault: "ફોજદારી કાયદો અને જામીન",
+    autoDetectTitle: "ભાષા સ્વયં ઓળખો",
+    autoOn: "ચાલુ",
+    autoOff: "બંધ",
+    autoHint: "11 ભાષાઓમાંથી કોઈપણમાં બોલો. ન્યાયસાથી ભાષા ઓળખીને તે જ ભાષામાં જવાબ આપશે.",
+    autoDetected: "ઓળખાયેલી ભાષા",
+    autoDetecting: "બોલાયેલી ભાષા ઓળખાઈ રહી છે…",
+    autoUnavailable: "આ ઉપકરણ પર સ્વયં ભાષા ઓળખ ઉપલબ્ધ નથી. ઉપરથી ભાષા પસંદ કરો અથવા નીચે તમારો પ્રશ્ન લખો.",
+    autoAnswering: "તમારી બોલાયેલી ભાષામાં જવાબ",
   },
   pa: {
     appName: "ਨਿਆਇਸਾਥੀ",
@@ -3291,6 +3371,14 @@ export const TRANSLATIONS: Record<string, TranslationStrings> = {
     trViolationDefault: "ਬਿਨਾਂ ਹੈਲਮੇਟ ਦੇ ਗੱਡੀ ਚਲਾਉਣਾ",
     lwRegLangDefault: "ਅੰਗਰੇਜ਼ੀ, ਹਿੰਦੀ",
     lwRegPracticeDefault: "ਅਪਰਾਧਿਕ ਕਾਨੂੰਨ ਅਤੇ ਜ਼ਮਾਨਤ",
+    autoDetectTitle: "ਭਾਸ਼ਾ ਸਵੈ-ਪਛਾਣ",
+    autoOn: "ਚਾਲੂ",
+    autoOff: "ਬੰਦ",
+    autoHint: "11 ਭਾਸ਼ਾਵਾਂ ਵਿੱਚੋਂ ਕਿਸੇ ਵੀ ਵਿੱਚ ਬੋਲੋ। ਨਿਆਇਸਾਥੀ ਭਾਸ਼ਾ ਪਛਾਣ ਕੇ ਉਸੇ ਭਾਸ਼ਾ ਵਿੱਚ ਜਵਾਬ ਦੇਵੇਗਾ।",
+    autoDetected: "ਪਛਾਣੀ ਭਾਸ਼ਾ",
+    autoDetecting: "ਬੋਲੀ ਭਾਸ਼ਾ ਪਛਾਣੀ ਜਾ ਰਹੀ ਹੈ…",
+    autoUnavailable: "ਇਸ ਡਿਵਾਈਸ 'ਤੇ ਸਵੈ-ਭਾਸ਼ਾ ਪਛਾਣ ਉਪਲਬਧ ਨਹੀਂ ਹੈ। ਉੱਪਰੋਂ ਭਾਸ਼ਾ ਚੁਣੋ ਜਾਂ ਹੇਠਾਂ ਆਪਣਾ ਸਵਾਲ ਲਿਖੋ।",
+    autoAnswering: "ਤੁਹਾਡੀ ਬੋਲੀ ਭਾਸ਼ਾ ਵਿੱਚ ਜਵਾਬ",
   },
   ur: {
     appName: "نیاۓ ساتھی",
@@ -3589,6 +3677,14 @@ export const TRANSLATIONS: Record<string, TranslationStrings> = {
     trViolationDefault: "بغیر ہیلمٹ کے گاڑی چلانا",
     lwRegLangDefault: "انگریزی، ہندی۔",
     lwRegPracticeDefault: "فوجداری قانون اور ضمانت",
+    autoDetectTitle: "خودکار زبان کی شناخت",
+    autoOn: "آن",
+    autoOff: "آف",
+    autoHint: "11 زبانوں میں سے کسی میں بھی بولیں۔ نیاۓ ساتھی زبان پہچان کر اسی زبان میں جواب دے گی۔",
+    autoDetected: "شناخت شدہ زبان",
+    autoDetecting: "بولی گئی زبان کی شناخت ہو رہی ہے…",
+    autoUnavailable: "اس ڈیوائس پر خودکار زبان کی شناخت دستیاب نہیں۔ اوپر سے زبان منتخب کریں یا نیچے اپنا سوال لکھیں۔",
+    autoAnswering: "آپ کی بولی گئی زبان میں جواب",
   },
 };
 

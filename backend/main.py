@@ -6,6 +6,7 @@ from backend.config import settings, PROJECT_ROOT
 from backend.models.database import init_db
 from backend.scripts.ingest import ingest_laws
 from backend.routers import chat, voice, document, traffic, complaint, lawyers, feedback, admin
+from backend.services import speech_service
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("nyayasathi.backend")
@@ -17,6 +18,7 @@ async def lifespan(app: FastAPI):
     init_db()
     count = ingest_laws(force_reingest=False)
     logger.info(f"Knowledge Base Ready: {count} active legal chunks available.")
+    speech_service.warmup_async()
     yield
     # Shutdown
     logger.info("Shutting down NyayaSathi Backend Service...")
