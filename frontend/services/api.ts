@@ -268,6 +268,10 @@ export interface Lawyer {
   name: string;
   city: string;
   state: string;
+  area: string;
+  pincode: string;
+  address: string;
+  court: string;
   languages: string[];
   practice_area: string;
   years_experience: number;
@@ -278,15 +282,35 @@ export interface Lawyer {
   is_sample: boolean;
 }
 
-export async function fetchLawyers(filters: { city?: string; language?: string; practice_area?: string }): Promise<Lawyer[]> {
+export interface LawyerLocationSuggestion {
+  label: string;
+  value: string;
+  type: 'city' | 'area' | 'state' | string;
+  city: string;
+  state: string;
+}
+
+export async function fetchLawyers(filters: { location?: string; city?: string; language?: string; practice_area?: string }): Promise<Lawyer[]> {
   const baseUrl = getBackendUrl();
   const params = new URLSearchParams();
-  if (filters.city) params.append('city', filters.city);
+  const location = (filters.location || filters.city || '').trim();
+  if (location) params.append('location', location);
   if (filters.language) params.append('language', filters.language);
   if (filters.practice_area) params.append('practice_area', filters.practice_area);
 
   const res = await fetchWithTimeout(`${baseUrl}/lawyers?${params.toString()}`);
   if (!res.ok) throw new Error('Failed to load lawyers directory.');
+  return await res.json();
+}
+
+export async function fetchLawyerLocations(query: string, limit = 8): Promise<LawyerLocationSuggestion[]> {
+  const baseUrl = getBackendUrl();
+  const params = new URLSearchParams();
+  if (query.trim()) params.append('q', query.trim());
+  params.append('limit', String(limit));
+
+  const res = await fetchWithTimeout(`${baseUrl}/lawyers/locations?${params.toString()}`);
+  if (!res.ok) throw new Error('Failed to load location suggestions.');
   return await res.json();
 }
 

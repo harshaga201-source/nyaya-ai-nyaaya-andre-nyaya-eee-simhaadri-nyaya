@@ -15,7 +15,7 @@ NyayaSathi is a demo-ready, citizen-centric legal awareness platform designed to
 - **Complaint Generator**: Step-by-step drafting for Police Complaints / Zero FIR requests (Section 173 BNSS), Consumer Commission Complaints (Section 35 CPA 2019), Cyber Crime grievances, and RTI applications. Exportable/printable to PDF (`expo-print`, `expo-sharing`, `window.print`).
 - **Emergency Safety Layer**: Real-time detection of violence, abuse, arrest, suicide, and threats with immediate 24/7 helplines (**112**, **181**, **1098**, **1930**, **Tele-Law 14454**).
 - **Dual-Tier Cache with UI Badge**: Exact normalized cache + semantic embedding similarity cache (cosine similarity >= 0.92) delivering instant answers in <5ms with a `⚡ instant answer (cached)` badge.
-- **Find a Lawyer & Sample Directory**: 8 sample verified advocates with filter by city, language, and practice area, client consultation request modal with consent checkbox, and lawyer registration form.
+- **Find a Lawyer Directory**: 66 verified demo advocate profiles across 22 Indian cities (3 per city), each with locality, 6-digit PIN, chamber address, primary court, languages, practice area, experience, Bar Council number, phone, and email. Location search matches city, locality, state, PIN code, court, common spellings/aliases (`Bangalore`, `Bombay`, `Gurgaon`, `Delhi NCR`), native-script names, and typo-tolerant input, with autocomplete suggestions. Combined language and practice-area filters, consultation requests with consent, and lawyer registration with strict validation; new registrations stay hidden as `pending_verification` until approved.
 - **Admin Telemetry & Quality Control**: `/admin` dashboard tracking queries, cache hit rates, average response latency, and citizen feedback.
 
 ---

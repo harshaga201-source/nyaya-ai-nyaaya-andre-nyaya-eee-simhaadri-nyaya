@@ -1,5 +1,26 @@
-from pydantic import BaseModel, Field
+import re
+from datetime import datetime
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Dict, Any
+
+from backend.services.language_names import canonical_language_name
+
+BAR_COUNCIL_RE = re.compile(r"^[A-Z]{1,4}/\d{1,6}/\d{4}$")
+EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+
+
+def _normalize_indian_phone(value: str) -> str:
+    """Return a canonical +91 XXXXX XXXXX mobile number or raise ValueError."""
+    if not isinstance(value, str):
+        raise ValueError("Phone number must be text.")
+    digits = re.sub(r"\D", "", value)
+    if len(digits) == 12 and digits.startswith("91"):
+        digits = digits[2:]
+    elif len(digits) == 11 and digits.startswith("0"):
+        digits = digits[1:]
+    if not re.fullmatch(r"[6-9]\d{9}", digits):
+        raise ValueError("Enter a valid 10-digit Indian mobile number (starting 6-9).")
+    return f"+91 {digits[:5]} {digits[5:]}"
 
 class ChatRequest(BaseModel):
     message: str = Field(..., description="User query or legal question")
@@ -108,6 +129,10 @@ class LawyerItem(BaseModel):
     name: str
     city: str
     state: str
+    area: str = ""
+    pincode: str = ""
+    address: str = ""
+    court: str = ""
     languages: List[str]
     practice_area: str
     years_experience: int
@@ -117,24 +142,113 @@ class LawyerItem(BaseModel):
     status: str = "verified"
     is_sample: bool = True
 
+class LawyerLocationSuggestion(BaseModel):
+    label: str
+    value: str
+    type: str
+    city: str = ""
+    state: str = ""
+
 class LawyerRegisterRequest(BaseModel):
-    name: str
-    city: str
-    state: str
-    languages: List[str]
-    practice_area: str
-    years_experience: int
-    bar_council_no: str
+    name: str = Field(..., min_length=3, max_length=120)
+    city: str = Field(..., min_length=2, max_length=80)
+    state: str = Field(..., min_length=2, max_length=80)
+    area: str = Field("", max_length=120)
+    pincode: str = Field("", max_length=6)
+    address: str = Field("", max_length=240)
+    court: str = Field("", max_length=160)
+    languages: List[str] = Field(..., min_length=1, max_length=8)
+    practice_area: str = Field(..., min_length=3, max_length=160)
+    years_experience: int = Field(..., ge=0, le=60)
+    bar_council_no: str = Field(..., min_length=8, max_length=24)
     phone: str
     email: str
 
+    @field_validator("name", "city", "state", "area", "pincode", "address", "court", "practice_area", "bar_council_no", mode="before")
+    @classmethod
+    def _strip_text(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("bar_council_no")
+    @classmethod
+    def _validate_bar_council_no(cls, value: str) -> str:
+        normalized = re.sub(r"\s+", "", value).upper()
+        if not BAR_COUNCIL_RE.fullmatch(normalized):
+            raise ValueError("Bar Council number must look like D/1234/2015 or KAR/567/2018.")
+        year = int(normalized.rsplit("/", 1)[1])
+        if year < 1950 or year > datetime.now().year:
+            raise ValueError("Bar Council enrolment year is out of range.")
+        return normalized
+
+    @field_validator("phone")
+    @classmethod
+    def _validate_phone(cls, value: str) -> str:
+        return _normalize_indian_phone(value)
+
+    @field_validator("email")
+    @classmethod
+    def _validate_email(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if not EMAIL_RE.fullmatch(normalized):
+            raise ValueError("Enter a valid email address.")
+        return normalized
+
+    @field_validator("pincode")
+    @classmethod
+    def _validate_pincode(cls, value: str) -> str:
+        value = value.strip()
+        if value and not re.fullmatch(r"\d{6}", value):
+            raise ValueError("PIN code must be exactly 6 digits.")
+        return value
+
+    @field_validator("languages")
+    @classmethod
+    def _validate_languages(cls, values: List[str]) -> List[str]:
+        cleaned: List[str] = []
+        seen = set()
+        for item in values:
+            language = canonical_language_name((item or "").strip())
+            if not language:
+                continue
+            if len(language) < 2 or len(language) > 40:
+                raise ValueError("Each language name must be 2-40 characters.")
+            key = language.casefold()
+            if key not in seen:
+                seen.add(key)
+                cleaned.append(language)
+        if not cleaned:
+            raise ValueError("Add at least one spoken language.")
+        return cleaned
+
 class LawyerConsultRequest(BaseModel):
     lawyer_id: str
-    user_name: str
+    user_name: str = Field(..., min_length=2, max_length=120)
     user_phone: str
     user_email: Optional[str] = None
-    issue_summary: str
+    issue_summary: str = Field(..., min_length=10, max_length=2000)
     consent_given: bool
+
+    @field_validator("user_name", "issue_summary", mode="before")
+    @classmethod
+    def _strip_text(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("user_phone")
+    @classmethod
+    def _validate_phone(cls, value: str) -> str:
+        return _normalize_indian_phone(value)
+
+    @field_validator("user_email")
+    @classmethod
+    def _validate_email(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        normalized = value.strip().lower()
+        if not normalized:
+            return None
+        if not EMAIL_RE.fullmatch(normalized):
+            raise ValueError("Enter a valid email address.")
+        return normalized
 
 class FeedbackRequest(BaseModel):
     rating: int = Field(..., ge=1, le=5)

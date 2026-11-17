@@ -1,11 +1,16 @@
 import sys
+import re
+import uuid
 from pathlib import Path
 
 # Add project root to sys.path
 root_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
-from backend.models.database import init_db
+from pydantic import ValidationError
+from fastapi import HTTPException
+
+from backend.models.database import init_db, get_db
 from backend.models.schemas import (
     ChatRequest,
     TrafficDisputeRequest,
@@ -17,7 +22,13 @@ from backend.models.schemas import (
 from backend.routers.chat import chat_endpoint
 from backend.routers.traffic import traffic_dispute_endpoint
 from backend.routers.complaint import draft_complaint_endpoint
-from backend.routers.lawyers import list_lawyers, register_lawyer, request_lawyer_consult
+from backend.routers.lawyers import (
+    get_lawyer,
+    list_lawyer_locations,
+    list_lawyers,
+    register_lawyer,
+    request_lawyer_consult,
+)
 from backend.routers.feedback import submit_feedback
 from backend.routers.admin import get_admin_stats
 from backend.scripts.ingest import ingest_laws
@@ -101,10 +112,75 @@ def test_all():
     assert "Review with a lawyer before filing." in comp_res.banner_warning
 
     # 6. Lawyers Directory & Filters
-    print("\n--- 6. Testing Lawyers Directory & Consultation ---", flush=True)
+    print("\n--- 6. Testing Lawyers Directory, Location Matching & Consultation ---", flush=True)
     all_lawyers = list_lawyers()
-    print("   Total Seeded Lawyers:", len(all_lawyers), flush=True)
-    assert len(all_lawyers) >= 8
+    print("   Total Verified Lawyers:", len(all_lawyers), flush=True)
+    print("   Cities Covered:", len({l.city for l in all_lawyers}), flush=True)
+    print("   Localities Covered:", len({l.area for l in all_lawyers}), flush=True)
+    assert len(all_lawyers) >= 60
+    assert len({l.city for l in all_lawyers}) >= 20
+
+    bar_re = re.compile(r"^[A-Z]{1,4}/\d{1,6}/\d{4}$")
+    phone_re = re.compile(r"^\+91 [6-9]\d{4} \d{5}$")
+    email_re = re.compile(r"^[a-z0-9][a-z0-9._-]*@[a-z0-9.-]+\.[a-z]{2,}$")
+    for lawyer in all_lawyers:
+        assert lawyer.status == "verified"
+        assert lawyer.area and lawyer.court and lawyer.address and lawyer.pincode
+        assert len(lawyer.pincode) == 6 and lawyer.pincode.isdigit()
+        assert bar_re.fullmatch(lawyer.bar_council_no), lawyer.bar_council_no
+        assert phone_re.fullmatch(lawyer.phone or ""), lawyer.phone
+        assert email_re.fullmatch(lawyer.email or ""), lawyer.email
+        assert 0 <= lawyer.years_experience <= 60
+        assert len(lawyer.languages) >= 2
+    assert len({l.bar_council_no for l in all_lawyers}) == len(all_lawyers)
+    assert len({l.phone for l in all_lawyers}) == len(all_lawyers)
+    assert len({l.email for l in all_lawyers}) == len(all_lawyers)
+    print("   All profiles have valid Bar Council numbers, phones, emails and PIN codes.", flush=True)
+
+    def lawyer_names(**filters):
+        return {lawyer.name for lawyer in list_lawyers(**filters)}
+
+    hyderabad_names = {
+        "Adv. Srinivas Reddy",
+        "Adv. Kavitha Rao",
+        "Adv. Mohammed Irfan",
+    }
+    location_cases = {
+        "Hyderabad": hyderabad_names,
+        "Banjara Hills": {"Adv. Srinivas Reddy"},
+        "Telangana": hyderabad_names,
+        "500034": {"Adv. Srinivas Reddy"},
+        "Bangalore": {"Adv. Suresh Gowda", "Adv. Priya Venkatesh", "Adv. Ananya Rao"},
+        "Hydrabad": hyderabad_names,
+        "Mumbai, Bandra": {"Adv. Farhan Qureshi"},
+        "हैदराबाद": hyderabad_names,
+        "హైదరాబాద్": hyderabad_names,
+        "தமிழ்நாடு": {"Adv. Lakshmi Narayanan", "Adv. Karthik Subramanian", "Adv. Deepa Krishnan"},
+    }
+    for query, expected in location_cases.items():
+        actual = lawyer_names(location=query)
+        assert actual == expected, f"{query}: {actual}"
+        print(f"   Location '{query}' -> {len(actual)} matching advocate(s)", flush=True)
+
+    assert len(list_lawyers(location="Delhi NCR")) == 9
+    assert list_lawyers(location="Atlantis") == []
+    assert list_lawyers(location="London") == []
+    assert lawyer_names(location="Hyderabad", practice_area="criminal") == {"Adv. Srinivas Reddy"}
+    assert lawyer_names(location="Hyderabad", language="Telugu") == hyderabad_names
+    assert len(list_lawyers(language="telgu")) == 6
+    assert len(list_lawyers(language="तेलुगु")) == 6
+    assert len(list_lawyers(language="अंग्रेजी")) == len(all_lawyers)
+    print("   Combined location + practice-area + language filters passed.", flush=True)
+
+    suggestions = list_lawyer_locations(q="banj", limit=5)
+    assert any(item.value == "Banjara Hills, Hyderabad" for item in suggestions)
+    assert any("Sector 62" in item.value for item in list_lawyer_locations(q="sec", limit=8))
+    assert len(list_lawyer_locations(q="", limit=8)) == 8
+    print("   Location autocomplete suggestions passed.", flush=True)
+
+    detail = get_lawyer("adv-hyderabad-01")
+    assert detail.name == "Adv. Srinivas Reddy" and detail.court == "Telangana High Court"
+    print("   Verified profile detail lookup passed.", flush=True)
 
     # Request consultation with consent
     consult_req = LawyerConsultRequest(
@@ -116,21 +192,90 @@ def test_all():
     )
     consult_res = request_lawyer_consult(consult_req)
     print("   Consultation Status:", consult_res["status"], flush=True)
+    with get_db() as conn:
+        conn.execute("DELETE FROM lawyer_requests WHERE user_name = 'Citizen Test User'")
+        conn.commit()
 
-    # Register lawyer
+    # Invalid registration must be rejected by schema validation.
+    invalid_registration_base = dict(
+        name="Adv. Invalid Payload",
+        bar_council_no="TS/1234/2020",
+        city="Hyderabad",
+        state="Telangana",
+        languages=["English"],
+        practice_area="Criminal Law & Bail",
+        years_experience=5,
+        phone="+91 98765 99997",
+        email="invalid.payload@nyayasathi.demo",
+    )
+    for field, value in (
+        ("phone", "+91 12345 00000"),
+        ("bar_council_no", "TS-1234-2020"),
+        ("email", "not-an-email"),
+    ):
+        payload = dict(invalid_registration_base)
+        payload[field] = value
+        try:
+            LawyerRegisterRequest(**payload)
+            raise AssertionError(f"Invalid {field} was accepted")
+        except ValidationError:
+            pass
+    print("   Invalid phone/email/Bar Council payloads rejected.", flush=True)
+
+    localized = LawyerRegisterRequest(**{
+        **invalid_registration_base,
+        "languages": ["अंग्रेजी", "हिंदी", "తెలుగు"],
+    })
+    assert localized.languages == ["English", "Hindi", "Telugu"]
+    print("   Localized language names normalised to English directory values.", flush=True)
+
+    # Register a pending lawyer; it must stay out of the public verified list.
+    serial = int(uuid.uuid4().int % 900000) + 100000
     reg_req = LawyerRegisterRequest(
-        name="Adv. Vikramaditya Rathore",
-        bar_council_no="RAJ/567/2018",
-        city="Jaipur",
-        state="Rajasthan",
-        languages=["English", "Hindi"],
+        name=f"Adv. Test Verification {serial}",
+        bar_council_no=f"TS/{serial}/2020",
+        city="Hyderabad",
+        state="Telangana",
+        area="Banjara Hills",
+        pincode="500034",
+        address="Chamber 1, Test Chambers, Banjara Hills, Hyderabad - 500034",
+        court="Telangana High Court",
+        languages=["English", "Hindi", "Telugu"],
         practice_area="Constitutional & RTI Law",
         years_experience=6,
-        phone="+91 98290 XXXXX",
-        email="rathore.law@sample.demo"
+        phone="+91 98765 99999",
+        email=f"verify.{serial}@nyayasathi.demo"
     )
     reg_res = register_lawyer(reg_req)
-    print("   Lawyer Registration:", reg_res["message"], flush=True)
+    pending_id = reg_res["id"]
+    try:
+        print("   Lawyer Registration:", reg_res["message"], flush=True)
+        assert all(lawyer.id != pending_id for lawyer in list_lawyers())
+
+        try:
+            register_lawyer(reg_req)
+            raise AssertionError("Duplicate Bar Council number was accepted")
+        except HTTPException as exc:
+            assert exc.status_code == 409
+
+        pending_consult = LawyerConsultRequest(
+            lawyer_id=pending_id,
+            user_name="Citizen Test User",
+            user_phone="+91 98765 99998",
+            issue_summary="Consultation request for a profile pending verification.",
+            consent_given=True,
+        )
+        try:
+            request_lawyer_consult(pending_consult)
+            raise AssertionError("Pending lawyer accepted a consultation request")
+        except HTTPException as exc:
+            assert exc.status_code == 404
+        print("   Pending profiles hidden; duplicate Bar number and pending consult rejected.", flush=True)
+    finally:
+        with get_db() as conn:
+            conn.execute("DELETE FROM lawyers WHERE id = ?", (pending_id,))
+            conn.execute("DELETE FROM lawyer_requests WHERE lawyer_id = ?", (pending_id,))
+            conn.commit()
 
     # 7. Feedback Submission
     print("\n--- 7. Testing Citizen Feedback & Quality Logging ---", flush=True)

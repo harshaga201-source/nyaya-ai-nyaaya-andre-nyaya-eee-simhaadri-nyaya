@@ -72,6 +72,10 @@ def init_db():
                 name TEXT NOT NULL,
                 city TEXT NOT NULL,
                 state TEXT NOT NULL,
+                area TEXT DEFAULT '',
+                pincode TEXT DEFAULT '',
+                address TEXT DEFAULT '',
+                court TEXT DEFAULT '',
                 languages TEXT NOT NULL, -- JSON array
                 practice_area TEXT NOT NULL,
                 years_experience INTEGER NOT NULL,
@@ -83,6 +87,20 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Existing databases predate the locality fields: add them in place.
+        existing_columns = {row["name"] for row in cursor.execute("PRAGMA table_info(lawyers)").fetchall()}
+        for column, ddl in (
+            ("area", "TEXT DEFAULT ''"),
+            ("pincode", "TEXT DEFAULT ''"),
+            ("address", "TEXT DEFAULT ''"),
+            ("court", "TEXT DEFAULT ''"),
+        ):
+            if column not in existing_columns:
+                cursor.execute(f"ALTER TABLE lawyers ADD COLUMN {column} {ddl}")
+
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_lawyers_status ON lawyers(status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_lawyers_city ON lawyers(city)")
         
         # 4. Lawyer consultation requests
         cursor.execute("""
@@ -126,21 +144,37 @@ def init_db():
             )
         """)
         
-        # Seed lawyers if table is empty
-        cursor.execute("SELECT COUNT(*) as cnt FROM lawyers")
-        if cursor.fetchone()["cnt"] == 0 and LAWYERS_SEED_PATH.exists():
+        # Demo profiles are owned by the seed file. Refresh them on every boot so
+        # existing installations receive the expanded/corrected directory, while
+        # leaving citizen-submitted (is_sample = 0) profiles untouched.
+        if LAWYERS_SEED_PATH.exists():
             with open(LAWYERS_SEED_PATH, "r", encoding="utf-8") as f:
                 lawyers = json.load(f)
-                for l in lawyers:
-                    cursor.execute("""
-                        INSERT OR REPLACE INTO lawyers (
-                            id, name, city, state, languages, practice_area,
-                            years_experience, bar_council_no, phone, email, status, is_sample
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'verified', 1)
-                    """, (
-                        l["id"], l["name"], l["city"], l["state"],
-                        json.dumps(l["languages"]), l["practice_area"],
-                        l["years_experience"], l["bar_council_no"],
-                        l.get("phone", ""), l.get("email", ""),
-                    ))
+            cursor.execute("DELETE FROM lawyers WHERE is_sample = 1")
+            for l in lawyers:
+                cursor.execute("""
+                    INSERT OR REPLACE INTO lawyers (
+                        id, name, city, state, area, pincode, address, court,
+                        languages, practice_area, years_experience, bar_council_no,
+                        phone, email, status, is_sample
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                """, (
+                    l["id"], l["name"], l["city"], l["state"],
+                    l.get("area", ""), l.get("pincode", ""),
+                    l.get("address", ""), l.get("court", ""),
+                    json.dumps(l["languages"]), l["practice_area"],
+                    l["years_experience"], l["bar_council_no"],
+                    l.get("phone", ""), l.get("email", ""),
+                    l.get("status", "verified"),
+                ))
+
+        # Enrolment numbers must be unique across the directory. Keep this
+        # best-effort so legacy databases with duplicate rows still start.
+        try:
+            cursor.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_lawyers_bar_unique "
+                "ON lawyers(bar_council_no COLLATE NOCASE)"
+            )
+        except sqlite3.IntegrityError:
+            pass
         conn.commit()
