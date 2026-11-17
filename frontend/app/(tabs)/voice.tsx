@@ -375,6 +375,10 @@ export default function VoiceScreen() {
     if (isRecording) return;
     setStatusMessage(null);
     setAnswerData(null);
+    updateTranscript('');
+    setDetectedLanguage(null);
+    stopLegalSpeech();
+    setIsSpeaking(false);
 
     if (Platform.OS === 'web') {
       // Preferred path: record WAV and let the server identify the language.
