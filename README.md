@@ -150,6 +150,32 @@ When running on a physical phone via Expo Go, your phone cannot reach `http://lo
    EXPO_PUBLIC_BACKEND_URL=https://abc123.ngrok-free.app
    ```
 
+### Method 3: Serve the web app to any device on your Wi-Fi (this build)
+The production web bundle in `frontend/dist` is served by the backend itself (no separate port). From any phone or laptop on the **same Wi-Fi**:
+```
+http://<your-PC-LAN-IP>:8000
+```
+- On Windows: `ipconfig` → look for "IPv4 Address" (e.g. `192.168.1.10`).
+- Ensure the one-time inbound firewall rule exists (admin PowerShell):
+  ```powershell
+  New-NetFirewallRule -DisplayName "NyayaSathi Backend (TCP 8000)" -Direction Inbound -LocalPort 8000 -Protocol TCP -Action Allow -Profile Private,Public
+  ```
+- Keep the server running (`python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000` from the project root).
+
+### Method 4: Public HTTPS link (Cloudflare quick tunnel + privacy proxy)
+For access outside your Wi-Fi, without a Cloudflare account:
+```bash
+# 1. One-time: python + this file runs on 127.0.0.1:8001 and forwards to the backend
+python backend/scripts/public_proxy.py
+# 2. Download cloudflared (single binary), then:
+cloudflared tunnel --url http://127.0.0.1:8001
+```
+The tunnel prints a public `https://<random>.trycloudflare.com` URL.
+- **What the proxy blocks:** `/admin*` returns **403** publicly. The admin dashboard holds citizen feedback text and has no authentication, so it must not be world-readable. Your admin is still available locally at `http://localhost:8000/admin` or on the LAN address.
+- Quick tunnels have no uptime guarantee; the URL dies when the PC or either process stops. For a fixed domain, create a named tunnel (free Cloudflare account) or use ngrok with an authtoken.
+
+**GEMINI_API_KEY (optional)**: paste a free key from [Google AI Studio](https://aistudio.google.com/apikey) into `backend/.env` — the backend loads it automatically at startup. With a key, Gemini powers chat answers, document OCR and translations; empty keeps the offline RAG engine.
+
 ---
 
 ## ⚡ 1-Click Launch Scripts (Windows)
@@ -161,27 +187,25 @@ For convenience during demo presentations, run any of the included batch scripts
 
 ---
 
-## 🧪 Evaluation Benchmark (30 Legal Questions)
-NyayaSathi includes a legal citation evaluation suite consisting of **30 statutory questions** across 3 legal domains:
+## 🧪 Evaluation Benchmark (42 Legal Questions)
+NyayaSathi includes a retrieval/citation evaluation suite covering **42 questions** across 3 legal domains (+ native-script subsets in Hindi, Tamil, Telugu, Bengali):
 - 10 Traffic Law questions (Motor Vehicles Act 1988/2019)
 - 10 Consumer Protection questions (Consumer Protection Act 2019)
 - 10 Criminal Procedure & Fundamental Rights questions (BNSS 2023, BNS 2023, BSA 2023)
+- 12 Indic-language questions (traffic, consumer, criminal procedure)
 
 To execute the benchmark:
 ```bash
 python -m backend.tests.run_eval
 ```
 **Evaluation Results:**
-- **Overall Retrieval Accuracy**: **30/30 (100.0%)**
-- Category Traffic Law: 10/10 (100.0%)
-- Category Consumer Law: 10/10 (100.0%)
-- Category Criminal Procedure & Rights: 10/10 (100.0%)
+- **Overall Retrieval Accuracy**: **42/42 (100.0%)**
 
 ---
 
 ## ⚖️ Architectural Decisions & Rationale
 1. **Isolated AI Models in Config**: Model identifiers (`gemini-2.5-flash`, `gemini-1.5-flash`, `text-embedding-004`) are isolated strictly within `backend/config.py` to allow instant switching between model versions without touching router code.
-2. **Hybrid Retrieval**: Combines semantic cosine similarity with lexical keyword overlap and direct section boost. This prevents false negatives on statutory section numbers (e.g. distinguishing Section 194B from Section 194D).
+2. **Hybrid Retrieval with Grounding Guard**: Combines semantic cosine similarity with stopword-free lexical overlap, direct section boost, and act-family intent routing, gated by a minimum-overlap rule. Off-topic questions are refused with a Tele-Law pointer rather than answered with unrelated provisions.
 3. **In-Memory Document Analysis**: Files uploaded to the Document Reader are decoded into memory and forwarded directly to Gemini multimodal. Files are **never written to disk**, strictly honoring citizen data privacy.
 4. **Offline / Fallback Resilience**: If network timeouts or API quotas occur, NyayaSathi gracefully falls back to deterministic statutory extraction from the local SQLite database without crashing or exposing stack traces to the user.
 5. **Mandatory Disclaimer**: Every response systematically enforces the statutory reminder: *"Legal information, not legal advice."*
