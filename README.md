@@ -187,19 +187,22 @@ For convenience during demo presentations, run any of the included batch scripts
 
 ---
 
-## 🧪 Evaluation Benchmark (42 Legal Questions)
-NyayaSathi includes a retrieval/citation evaluation suite covering **42 questions** across 3 legal domains (+ native-script subsets in Hindi, Tamil, Telugu, Bengali):
+## 🧪 Evaluation Benchmark (56 Legal Questions)
+NyayaSathi includes a dual verification suite — retrieval is checked **and the answer text itself is checked** (the answer must cite the expected section and out-of-scope questions must produce an honest refusal with no citations):
 - 10 Traffic Law questions (Motor Vehicles Act 1988/2019)
 - 10 Consumer Protection questions (Consumer Protection Act 2019)
 - 10 Criminal Procedure & Fundamental Rights questions (BNSS 2023, BNS 2023, BSA 2023)
 - 12 Indic-language questions (traffic, consumer, criminal procedure)
+- 6 Out-of-scope questions (must be refused, never answered with unrelated statutes)
+- 8 Intent-routed questions (purchase/warranty, road-stop, assault, insurance)
 
 To execute the benchmark:
 ```bash
 python -m backend.tests.run_eval
 ```
 **Evaluation Results:**
-- **Overall Retrieval Accuracy**: **42/42 (100.0%)**
+- **Overall Retrieval Accuracy**: **56/56 (100.0%)**
+- **Overall Answer Accuracy**: **56/56 (100.0%)**
 
 ---
 

@@ -341,5 +341,122 @@
     "expected_sections": [
       "173"
     ]
+  },
+  {
+    "id": "offtopic-1",
+    "category": "out_of_scope",
+    "question": "What are the rules for adoption of a child in India?",
+    "expected_sections": [],
+    "mode": "refuse"
+  },
+  {
+    "id": "offtopic-2",
+    "category": "out_of_scope",
+    "question": "My wife and I want a mutual consent divorce. What is the procedure in India?",
+    "expected_sections": [],
+    "mode": "refuse"
+  },
+  {
+    "id": "offtopic-3",
+    "category": "out_of_scope",
+    "question": "How can I register a private limited company in India?",
+    "expected_sections": [],
+    "mode": "refuse"
+  },
+  {
+    "id": "offtopic-4",
+    "category": "out_of_scope",
+    "question": "What is the process for a rent eviction of a tenant from my house?",
+    "expected_sections": [],
+    "mode": "refuse"
+  },
+  {
+    "id": "offtopic-5",
+    "category": "out_of_scope",
+    "question": "How do I apply for a fresh passport for the first time in India?",
+    "expected_sections": [],
+    "mode": "refuse"
+  },
+  {
+    "id": "offtopic-6",
+    "category": "out_of_scope",
+    "question": "बच्चे को गोद लेने के नियम क्या हैं?",
+    "expected_sections": [],
+    "mode": "refuse",
+    "language": "hi"
+  },
+  {
+    "id": "intent-1",
+    "category": "traffic",
+    "question": "My insured car met with an accident and the other party is claiming compensation. What are the legal requirements for the driver?",
+    "expected_sections": [
+      "196",
+      "130"
+    ]
+  },
+  {
+    "id": "intent-2",
+    "category": "consumer",
+    "question": "The seller refused to honour the warranty on my laptop and will not repair or replace it. What can I do?",
+    "expected_sections": [
+      "2(47)",
+      "2(10)",
+      "39"
+    ]
+  },
+  {
+    "id": "intent-3",
+    "category": "consumer",
+    "question": "I bought a washing machine for Rs 45,000 but the shop refuses to refund or replace it because it broke on first use.",
+    "expected_sections": [
+      "2(47)",
+      "39"
+    ]
+  },
+  {
+    "id": "intent-4",
+    "category": "traffic",
+    "question": "What is the fine for using a mobile phone while driving a car?",
+    "expected_sections": [
+      "184"
+    ]
+  },
+  {
+    "id": "intent-5",
+    "category": "criminal_procedure_and_rights",
+    "question": "What sections cover assault and causing hurt under the Bharatiya Nyaya Sanhita?",
+    "expected_sections": [
+      "74",
+      "75",
+      "115"
+    ]
+  },
+  {
+    "id": "intent-6",
+    "category": "traffic",
+    "question": "What is the requirement for third-party insurance before driving your vehicle on a public road?",
+    "expected_sections": [
+      "196",
+      "146"
+    ]
+  },
+  {
+    "id": "intent-7",
+    "category": "consumer",
+    "question": "I bought a PlayStation and it broke within a week; the shop refuses a refund. Where do I file my complaint?",
+    "expected_sections": [
+      "2(10)",
+      "2(47)",
+      "35"
+    ]
+  },
+  {
+    "id": "intent-8",
+    "category": "rti",
+    "question": "What is the correct procedure and timeline for an RTI application to a government department?",
+    "expected_sections": [
+      "6",
+      "7"
+    ]
   }
 ]

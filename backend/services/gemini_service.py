@@ -265,69 +265,97 @@ class GeminiService:
             
         q_lower = user_query.lower()
         
-        # Hindi Response
+        # Hindi Response — structured, query-matched advice.
         if req_lang == "hi":
             out = [
-                f"भारतीय वैधानिक कानून के अनुसार, आपके प्रश्न \"{user_query}\" के संदर्भ में विधिक प्रावधान निम्नलिखित हैं:\n"
+                f"आपके प्रश्न \"{user_query}\" पर आधारित कानूनी मार्गदर्शन:\n",
             ]
+            out.append("प्राप्त वैधानिक प्रावधान (retrieved sections):\n")
             for idx, s in enumerate(sources[:3], 1):
-                summary = s['content'][:260] + "..." if len(s['content']) > 260 else s['content']
+                content = s['content'].strip()
+                summary = content[:380] + ("..." if len(content) > 380 else "")
                 out.append(f"{idx}. [{s['act']}, {s['section']}] — {s['title']}")
-                out.append(f"{summary}\n")
-                
-            out.append("नागरिकों के लिए मुख्य वैधानिक सुरक्षा उपाय:")
+                out.append(summary + "\n")
+
+            out.append("इस पर कार्रवाई के व्यावहारिक कदम:\n")
             if any(k in q_lower for k in ["police", "arrest", "warrant", "stop", "पुलिस", "गिरफ्तार", "थाना"]):
-                out.append("• गिरफ्तारी के आधार: पुलिस को तुरंत गिरफ्तारी का विशिष्ट कारण और जमानत की पात्रता बतानी होगी [BNSS Section 47 (CrPC S.50)]।")
-                out.append("• गिरफ्तारी मेमो (Arrest Memo): गिरफ्तारी अधिकारी को कम से कम एक स्वतंत्र साक्षी के हस्ताक्षर सहित औपचारिक मेमो बनाना अनिवार्य है [BNSS Section 36 (CrPC S.41B)]।")
-                out.append("• नोटिस का अधिकार: 7 वर्ष तक की सजा वाले अपराधों में पुलिस मनमाने ढंग से गिरफ्तार नहीं कर सकती; उन्हें पहले उपस्थित होने का औपचारिक नोटिस देना होगा [BNSS Section 35 (CrPC S.41A)]।")
-                out.append("• अधिवक्ता से मिलने का अधिकार: पूछताछ के दौरान अपने पसंद के वकील से परामर्श करने का वैधानिक अधिकार है [BNSS Section 38 (CrPC S.41D)]।")
-                out.append("• महिलाओं की सुरक्षा: महिलाओं को सूर्यास्त के बाद और सूर्योदय से पहले केवल असाधारण परिस्थितियों में, मजिस्ट्रेट की पूर्व लिखित अनुमति से ही महिला पुलिस अधिकारी द्वारा गिरफ्तार किया जा सकता है [BNSS Section 43 (CrPC S.46)]।")
-            elif any(k in q_lower for k in ["zero fir", "fir", "रिपोर्ट"]):
-                out.append("• जीरो एफआईआर (Zero FIR): अपराध किसी भी क्षेत्र में हुआ हो, किसी भी नजदीकी पुलिस स्टेशन में जीरो एफआईआर दर्ज कराई जा सकती है [BNSS Section 173 (CrPC S.154)]।")
+                out.append("1. गिरफ्तारी के सटीक आधार और जमानत पात्रता तत्काल माँगें [BNSS Section 47 (CrPC S.50)]।")
+                out.append("2. गिरफ्तारी मेमो और परिवार को तुरंत सूचित करने की मांग करें [BNSS Section 36 (CrPC S.41B)]।")
+                out.append("3. 7 वर्ष तक की सजा वाले अपराधों में उपस्थिति का औपचारिक नोटिस माँगें [BNSS Section 35 (CrPC S.41A)]।")
+                out.append("4. पूछताछ के दौरान अपने पसंद के अधिवक्ता से सलाह लें [BNSS Section 38 (CrPC S.41D)]।")
+                out.append("5. 24 घंटे के भीतर मजिस्ट्रेट के समक्ष प्रस्तुत करना अनिवार्य है [BNSS Section 57]।")
+            elif any(k in q_lower for k in ["zero fir", "fir", "रिपोर्ट", "शिकायत"]):
+                out.append("1. निकटतम पुलिस थाने में जाएँ — जीरो एफआईआर के लिए क्षेत्र नहीं देखा जाता [BNSS Section 173]।")
+                out.append("2. पुलिस को लिखित रूप में जानकारी दर्ज करनी होगी; प्रति निःशुल्क माँगें।")
+                out.append("3. मना करने पर जिला SP से संपर्क करें या टेली-लॉ 14454 पर कॉल करें।")
             elif any(k in q_lower for k in ["traffic", "vehicle", "helmet", "चालान", "हेलमेट", "गाड़ी"]):
-                out.append("• डिजिलॉकर स्वीकृति: डिजिलॉकर या एम-परिवहन ऐप से ड्राइविंग लाइसेंस और वाहन दस्तावेज दिखाना पूरी तरह से कानूनी रूप से मान्य है [MVA Section 130]।")
-                out.append("• वर्चुअल कोर्ट: ट्रैफिक चालान का निपटारा बिना थाने या कोर्ट जाए ऑनलाइन किया जा सकता है [MVA Section 208]।")
+                out.append("1. डिजिलॉकर/एम-परिवहन पर दस्तावेज़ दिखाएँ — कानूनी रूप से मान्य [MVA Section 130]।")
+                out.append("2. चालान की जाँच echallan.parivahan.gov.in पर करें।")
+                out.append("3. वैध चालान का भुगतान ऑनलाइन करें; विवाद में वर्चुअल कोर्ट में contest करें [MVA Section 208]।")
+            elif any(k in q_lower for k in ["consumer", "refund", "defective", "रिफंड", "दोषपूर्ण", "वारंटी", "दुकान"]):
+                out.append("1. विक्रेता को लिखित मांग (ई-मेल/पत्र) भेजें — दोषपूर्ण सामान पर रिफंड, बदलने या मरम्मत।")
+                out.append("2. दोषपूर्ण उत्पाद पर रिफंड से मना करना अनुचित व्यापार है [CPA Section 2(47)]।")
+                out.append("3. शिकायत e-Daakhil पोर्टल पर ऑनलाइन दर्ज करें [CPA Section 35]।")
+                out.append("4. जिला उपभोक्ता आयोग: दोषपूर्ण सामान पर रिफंड, क्षतिपूर्ति व litigation costs [CPA Section 39]।")
             else:
-                out.append("• निःशुल्क कानूनी सहायता: पात्र नागरिक भारत सरकार की टेली-लॉ हेल्पलाइन 14454 पर कॉल करके मुफ्त कानूनी सहायता प्राप्त कर सकते हैं [Legal Services Authorities Act, Section 12]।")
-                
-            out.append("\n(नोट: पुराने आपराधिक कानूनों जैसे IPC, CrPC, और Evidence Act को BNS, BNSS और BSA द्वारा प्रतिस्थापित कर दिया गया है)।\n\nLegal information, not legal advice.")
+                out.append("1. ऊपर दिए प्रावधानों को अपने मामले में लागू करें।")
+                out.append("2. इनके बाहर किसी भी विषय के लिए टेली-लॉ 14454 पर कॉल करें।")
+                out.append("3. कार्रवाई से पहले इस ऐप के 'Find a Lawyer' से सत्यापित अधिवक्ता से बात करें।")
+
+            out.append("\n(नोट: IPC→BNS, CrPC→BNSS और Evidence Act→BSA परिवर्तन प्रभावी हैं।)")
+            out.append("\nLegal information, not legal advice.")
             return "\n".join(out)
             
-        # Default English Response
+        # Default English Response — structured, query-matched advice.
         out = [
-            f"According to statutory Indian law, your rights and relevant legal provisions regarding \"{user_query}\" are:\n"
+            f"Here is focused legal guidance for your question: \"{user_query}\"\n",
         ]
+        out.append("What the statute says (from the retrieved provisions):\n")
         for idx, s in enumerate(sources[:3], 1):
-            summary = s['content'][:280] + "..." if len(s['content']) > 280 else s['content']
+            content = s['content'].strip()
+            summary = content[:420] + ("..." if len(content) > 420 else "")
             out.append(f"{idx}. [{s['act']}, {s['section']}] — {s['title']}")
-            out.append(f"{summary}\n")
-            
-        out.append("Key Citizen Safeguards & Statutory Rights:")
+            out.append(summary + "\n")
+
+        out.append("Practical steps to act on this:\n")
         if any(k in q_lower for k in ["police", "arrest", "warrant", "stop", "custody", "lockup", "interrogation"]):
-            out.append("• Notice of Appearance: For offences punishable up to 7 years, police cannot arbitrarily arrest; they must serve a formal Notice of Appearance [BNSS Section 35 (CrPC S.41A)].")
-            out.append("• Grounds of Arrest & Bail: Police must immediately inform you of the exact grounds of arrest and whether the offence is bailable [BNSS Section 47 (CrPC S.50)].")
-            out.append("• Arrest Memo & Family Intimation: The arresting officer must prepare an arrest memo countersigned by at least one witness, and immediately notify a family member or nominated friend [BNSS Section 36 (CrPC S.41B)].")
-            out.append("• Right to Legal Counsel: You have the statutory right to meet and consult an advocate of your choice during interrogation [BNSS Section 38 (CrPC S.41D)].")
-            out.append("• Safeguards for Women: Women cannot be arrested between sunset and sunrise except under exceptional circumstances with prior written permission of a Judicial Magistrate, and only by a woman police officer [BNSS Section 43 (CrPC S.46)].")
-            out.append("• 24-Hour Production Limit: An arrested person cannot be detained in police custody beyond 24 hours without production before a Magistrate [BNSS Section 57 (CrPC S.57)].")
-        elif any(k in q_lower for k in ["traffic", "vehicle", "helmet", "licence", "speed", "mva", "challan"]):
-            out.append("• Electronic Document Acceptance: Presenting driving licence and vehicle registration via DigiLocker or mParivahan is legally valid under Rule 139 CMVR and MVA Section 130.")
-            out.append("• Virtual Courts: Traffic violations and e-challans can be contested or paid online via Virtual Courts without physically visiting a police station or court [MVA Section 208].")
-            out.append("• Protective Headgear: Wearing a compliant helmet is mandatory for rider and pillion under MVA Section 129, with penalties under Section 194D.")
-        elif any(k in q_lower for k in ["zero fir", "fir"]):
-            out.append("• Zero FIR Right: A Zero FIR can be registered at ANY police station regardless of territorial jurisdiction where the crime occurred [BNSS Section 173 (CrPC S.154)].")
-            out.append("• Immediate Recording: The police station cannot turn away the complainant; they must record the information, assign a Zero number, and transfer it to the jurisdictional police station.")
+            out.append("1. Ask the exact grounds of arrest and whether the offence is bailable [BNSS Section 47 (CrPC S.50)].")
+            out.append("2. Insist on a written arrest memo countersigned by one witness and immediate information to a family member [BNSS Section 36 (CrPC S.41B)].")
+            out.append("3. For offences punishable up to 7 years, demand a formal Notice of Appearance instead of arbitrary arrest [BNSS Section 35 (CrPC S.41A)].")
+            out.append("4. Consult an advocate of your choice during interrogation [BNSS Section 38 (CrPC S.41D)].")
+            out.append("5. If you are a woman, arrest can be made only by a woman officer, between sunrise and sunset, and in exceptional circumstances with prior written permission of a Judicial Magistrate [BNSS Section 43 (CrPC S.46)].")
+            out.append("6. An arrested person must be produced before a Magistrate within 24 hours of police custody [BNSS Section 57 (CrPC S.57)]; beyond that, detention is unlawful.")
+        elif any(k in q_lower for k in ["zero fir", "fir", "complaint", "report"]):
+            out.append("1. Go to the nearest police station — jurisdiction does not matter for a Zero FIR [BNSS Section 173 (CrPC S.154)].")
+            out.append("2. The officer must register your information in writing free of cost; request a copy.")
+            out.append("3. If the police refuse, approach the district Superintendent of Police (SP) or call Tele-Law 14454.")
+            out.append("4. Ask for the Zero FIR to be transferred to the jurisdictional station, and note the transfer number.")
+        elif any(k in q_lower for k in ["traffic", "vehicle", "helmet", "licence", "speed", "mva", "challan", "driving"]):
+            out.append("1. Present your documents digitally via DigiLocker or mParivahan — legally valid under CMVR Rule 139 and MVA Section 130.")
+            out.append("2. Verify the challan details first (vehicle number, date, section, amount) on echallan.parivahan.gov.in.")
+            out.append("3. If valid, pay online via the Virtual Court route [MVA Section 208] or echallan.parivahan.gov.in — never through third parties.")
+            out.append("4. If you dispute the challan, contest it before the Virtual Court / Lok Adalat with documents (receipts, licence, PUC, dashcam) [MVA Section 208].")
+            out.append("5. For helmet offences remember: compliant helmet is mandatory for rider and pillion [MVA Section 129]; fines apply [MVA Section 194D].")
         elif any(k in q_lower for k in ["consumer", "refund", "defective", "product", "store", "warranty"]):
-            out.append("• Prohibition on 'No Refund' for Defects: Stores cannot enforce 'goods once sold will not be returned' for defective products or deficient services; doing so constitutes an Unfair Trade Practice [Consumer Protection Act, Section 2(47)].")
-            out.append("• e-Daakhil Online Filing: Consumers can file complaints online without physical court appearance through the e-Daakhil portal [Consumer Protection Act, Section 35].")
+            out.append("1. Send a written demand (email/letter) to the seller — refund, replacement, or repair — quoting invoice and warranty.")
+            out.append("2. Keep the receipt/invoice; refusing to refund a defective product is an unfair trade practice [CPA, Section 2(47)].")
+            out.append("3. File a consumer complaint: in person, via postal mail, or online through e-Daakhil [CPA, Section 35] — no lawyer required.")
+            out.append("4. District Commission jurisdiction: up to Rs 50 lakh [CPA, Section 34]; supported relief includes refund, replacement, damages for agony/harassment, and litigation costs [CPA, Section 39].")
+            out.append("5. File within 2 years of the cause of action (delay can be condoned with reasons) [CPA, Section 69].")
         elif any(k in q_lower for k in ["rti", "information", "pio"]):
-            out.append("• 30-Day Mandatory Timeline: The Public Information Officer (PIO) must furnish information within 30 days of receiving the RTI application (or 48 hours if concerning life and liberty) [RTI Act, Section 7].")
-            out.append("• Penalties: Non-compliance or unjustified delays attract penalties up to Rs 25,000 on the PIO [RTI Act, Section 20].")
+            out.append("1. File the RTI application to the concerned Public Information Officer with full particulars [RTI Act, Section 6].")
+            out.append("2. No reason is needed; application fee is Rs 10 (postal/online) [RTI Act, Section 6].")
+            out.append("3. PIO must respond within 30 days (48 hours for life/liberty) [RTI Act, Section 7].")
+            out.append("4. No/delayed reply → first appeal under Section 19 [RTI Act]; penalties up to Rs 25,000 can be imposed on a defaulting officer [RTI Act, Section 20].")
         else:
-            out.append("• Free Legal Aid: Eligible citizens (including women, children, SC/ST, and low-income individuals) have the right to free legal representation under Section 12 of the Legal Services Authorities Act. Call Tele-Law helpline at 14454.")
-            
-        out.append("\n(Note: Criminal codes have transitioned: Indian Penal Code [IPC] is replaced by Bharatiya Nyaya Sanhita [BNS]; Code of Criminal Procedure [CrPC] by Bharatiya Nagarik Suraksha Sanhita [BNSS]; Indian Evidence Act by Bharatiya Sakshya Adhiniyam [BSA]).\n\nLegal information, not legal advice.")
-        
+            out.append("1. Use the retrieved provisions above as the anchor for your situation.")
+            out.append("2. For anything outside these texts, call the Tele-Law helpline at 14454 (free).")
+            out.append("3. Speak to a verified advocate from the Find a Lawyer directory in this app before acting.")
+
+        out.append("\nRemember: nothing here overrides an advocate's advice on your specific facts.")
+        out.append("\n(Note: IPC→BNS, CrPC→BNSS, and Evidence Act→BSA transitions have taken effect.)")
+        out.append("\nLegal information, not legal advice.")
+
         return "\n".join(out)
 
 gemini_service = GeminiService()

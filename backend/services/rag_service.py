@@ -69,6 +69,8 @@ LEGAL_EXPANSIONS = [
     (r"\b(?:woman|women|female|sunset|sunrise)\b", ["43", "women", "sunset", "sunrise", "safeguards", "female"]),
     (r"\b(?:helmet|protective headgear)\b", ["194d", "129", "helmet", "headgear", "motor", "vehicles"]),
     (r"\b(?:who is (?:a |an )?consumer|definition of consumer|what is (?:a )?consumer|consumer definition|considered (?:a )?consumer)\b", ["definition", "person", "consideration", "buys", "goods", "service"]),
+    (r"\b(?:bought|purchased|buy|purchase)\b", ["consumer", "goods", "product", "buys", "defective", "refund", "warranty"]),
+    (r"\b(?:seller|repair|replacement|servicing|warranty service)\b", ["consumer", "defective", "product", "service", "deficiency", "unfair", "trade"]),
     (r"\b(?:refund|defective (?:product|goods)|warranty|return policy|store refuse)\b", ["consumer", "protection", "defect", "defective", "refund", "unfair", "trade", "practice", "35"]),
     (r"\b(?:seatbelt|safety belt)\b", ["194b", "seatbelt", "safety", "belt"]),
     (r"\b(?:speed|overspeeding|speeding)\b", ["183", "112", "speed", "excessive"]),
@@ -113,6 +115,7 @@ STOPWORDS = {
     "detail", "details", "information", "file", "files", "filed", "filing",
     "apply", "applied", "application", "complaint", "complaints", "case",
     "cases", "matter", "court", "courts", "legal proceedings",
+    "time", "times", "first", "second", "fresh", "new", "date", "dates",
     # penalties/sentences match every criminal section without telling us which
     "punishment", "penalty", "penalties", "fine", "fines", "imprisonment",
     "sentence", "sentences", "conviction", "sentenced", "years", "months",
@@ -144,7 +147,7 @@ INTENT_PATTERNS = {
         r"\b(?:helmet|seatbelt|safety belt|traffic|challan|challans|speed|overspeed|"
         r"license|licence|driving|driver|vehicle|bike|scooter|motorcycle|car|motor|"
         r"puc|pollution|e-?challan|accident|crash|hit and run|parking|drunk|drunken|"
-        r"alcohol|red light|signal|over speed|insurance policy|highway|red light jumping)\b"
+        r"alcohol|red light|signal|over speed|insurance policy|highway|red light jumping|road)\b"
     ),
     "consumer": re.compile(
         r"\b(?:consumer|refund|defective|warranty|guarantee|unfair trade|seller|"
